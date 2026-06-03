@@ -95,6 +95,20 @@
         <button class="btn-icon" id="layoutToggle" title="레이아웃 전환" aria-label="레이아웃 전환">
           <span class="layout-icon">📱</span>
         </button>
+
+        <!-- 비로그인 상태 -->
+        <div class="nav-auth-guest" id="navAuthGuest" style="display:none">
+          <a href="/login"    class="btn-nav-auth btn-nav-outline">로그인</a>
+          <a href="/register" class="btn-nav-auth btn-cta">회원가입</a>
+        </div>
+
+        <!-- 로그인 상태 -->
+        <div class="nav-auth-logged" id="navAuthLogged" style="display:none">
+          <span class="nav-username" id="navUserName"></span>
+          <a href="/mypage" class="btn-nav-auth btn-nav-outline">마이페이지</a>
+          <button class="btn-nav-auth btn-nav-logout" id="navLogoutBtn">로그아웃</button>
+        </div>
+
         <a href="#consultation" class="btn-cta nav-cta">상담신청</a>
         <button class="hamburger" id="hamburger" aria-label="메뉴 열기" aria-expanded="false">
           <span></span>
@@ -125,6 +139,18 @@
       <li><a href="#map-search">주소검색</a></li>
       <li><a href="#consultation">상담신청</a></li>
     </ul>
+
+    <!-- 모바일 인증 영역 -->
+    <div class="drawer-auth-guest" id="drawerAuthGuest" style="display:none">
+      <a href="/login"    class="btn-cta drawer-auth-btn">로그인</a>
+      <a href="/register" class="drawer-auth-link">회원가입</a>
+    </div>
+    <div class="drawer-auth-logged" id="drawerAuthLogged" style="display:none">
+      <p class="drawer-username" id="drawerUserName"></p>
+      <a href="/mypage" class="btn-cta drawer-auth-btn">마이페이지</a>
+      <button class="drawer-auth-link drawer-logout-btn" id="drawerLogoutBtn">로그아웃</button>
+    </div>
+
     <a href="#consultation" class="btn-cta drawer-cta">무료 상담 신청</a>
   </aside>
 
@@ -1118,6 +1144,16 @@
     </svg>
   </button>
 
+  <!--
+    Supabase 인증 설정 가이드:
+    아래 YOUR_SUPABASE_URL, YOUR_SUPABASE_ANON_KEY를
+    .env.local의 NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY 값으로 교체
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script>
+    window.SUPABASE_URL      = 'YOUR_SUPABASE_URL';
+    window.SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+  </script>
   <script src="main.js"></script>
 </body>
 </html>

@@ -1,0 +1,26 @@
+{
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:init": "ts-node scripts/initDB.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1060.0",
+    "@aws-sdk/s3-request-presigner": "^3.1060.0",
+    "@supabase/auth-helpers-nextjs": "^0.15.0",
+    "@supabase/supabase-js": "^2.107.0",
+    "next": "^16.2.7",
+    "pg": "^8.21.0",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "@types/pg": "^8.20.0",
+    "@types/react": "^19.2.16",
+    "@types/react-dom": "^19.2.3",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}

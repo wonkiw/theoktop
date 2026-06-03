@@ -621,36 +621,78 @@
 
 
   /* ─────────────────────────────────────────────────────────────
-     AUTH PANEL — tab switching + login state
+     AUTH — Supabase 세션 기반 인증 상태 관리
   ───────────────────────────────────────────────────────────── */
 
-  const LS_USER = 'oktop-user';
+  var supabaseClient = null;
 
-  function getUser() {
-    try { return JSON.parse(localStorage.getItem(LS_USER)); }
-    catch { return null; }
+  (function initSupabase() {
+    if (!window.supabase || !window.SUPABASE_URL || window.SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
+    supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+    // 초기 세션 확인
+    supabaseClient.auth.getUser().then(function (res) {
+      applyAuthState(res.data.user || null);
+    });
+
+    // 실시간 세션 변경 감지
+    supabaseClient.auth.onAuthStateChange(function (event, session) {
+      applyAuthState(session ? session.user : null);
+    });
+  })();
+
+  function getDisplayName(user) {
+    if (!user) return '';
+    return (user.user_metadata && (user.user_metadata.full_name || user.user_metadata.name))
+      || (user.email ? user.email.split('@')[0] : '사용자');
   }
 
-  function setUser(user) { localStorage.setItem(LS_USER, JSON.stringify(user)); }
-  function clearUser()   { localStorage.removeItem(LS_USER); }
+  function applyAuthState(user) {
+    var name = user ? getDisplayName(user) : null;
 
-  function applyAuthState() {
-    const user = getUser();
-    const authPanel   = document.getElementById('authPanel');
-    const consultPanel = document.getElementById('consultPanel');
-    const nameEl = document.getElementById('consultUserName');
+    /* 상담 패널 (페이지 내 상담 섹션) */
+    var authPanel    = document.getElementById('authPanel');
+    var consultPanel = document.getElementById('consultPanel');
+    var consultNameEl = document.getElementById('consultUserName');
+    if (authPanel)     authPanel.hidden    = !!user;
+    if (consultPanel)  consultPanel.hidden = !user;
+    if (consultNameEl) consultNameEl.textContent = name || '사용자';
 
-    if (user) {
-      if (authPanel)    authPanel.hidden    = true;
-      if (consultPanel) consultPanel.hidden = false;
-      if (nameEl)       nameEl.textContent  = user.name || '사용자';
-    } else {
-      if (authPanel)    authPanel.hidden    = false;
-      if (consultPanel) consultPanel.hidden = true;
-    }
+    /* 네비게이션 바 */
+    var navGuest  = document.getElementById('navAuthGuest');
+    var navLogged = document.getElementById('navAuthLogged');
+    var navName   = document.getElementById('navUserName');
+    if (navGuest)  navGuest.style.display  = user ? 'none'  : 'flex';
+    if (navLogged) navLogged.style.display = user ? 'flex'  : 'none';
+    if (navName)   navName.textContent     = name ? name + '님' : '';
+
+    /* 모바일 드로어 */
+    var drawerGuest  = document.getElementById('drawerAuthGuest');
+    var drawerLogged = document.getElementById('drawerAuthLogged');
+    var drawerName   = document.getElementById('drawerUserName');
+    if (drawerGuest)  drawerGuest.style.display  = user ? 'none'  : 'flex';
+    if (drawerLogged) drawerLogged.style.display = user ? 'flex'  : 'none';
+    if (drawerName)   drawerName.textContent     = name ? name + '님' : '';
   }
 
-  applyAuthState();
+  // 로그아웃 버튼
+  document.getElementById('navLogoutBtn')?.addEventListener('click', function () {
+    if (!supabaseClient) return;
+    supabaseClient.auth.signOut().then(function () {
+      applyAuthState(null);
+      showToast('로그아웃 되었습니다.', '');
+    });
+  });
+
+  document.getElementById('drawerLogoutBtn')?.addEventListener('click', function () {
+    if (!supabaseClient) return;
+    supabaseClient.auth.signOut().then(function () {
+      applyAuthState(null);
+      showToast('로그아웃 되었습니다.', '');
+    });
+  });
+
+  applyAuthState(null); // 초기 렌더 (Supabase 응답 전 기본값)
 
   /* Tab switching */
   document.querySelectorAll('.auth-tab').forEach(function (tab) {
