@@ -1,0 +1,1123 @@
+<!--
+  ╔══════════════════════════════════════════════════════════════╗
+  ║  THE OKTOP — 개발자 가이드                                   ║
+  ╠══════════════════════════════════════════════════════════════╣
+  ║  [네이버 지도 API]                                           ║
+  ║  1. https://www.ncloud.com → Application 등록               ║
+  ║  2. AI·NAVER API → Maps, Geocoding 서비스 활성화            ║
+  ║  3. 발급된 Client ID로 아래 플레이스홀더 교체               ║
+  ║     • index.html  : YOUR_NAVER_MAP_CLIENT_ID (지도 스크립트) ║
+  ║     • main.js     : YOUR_NAVER_CLIENT_ID (OAuth 로그인)      ║
+  ║                                                              ║
+  ║  [네이버 OAuth 로그인]                                       ║
+  ║  1. https://developers.naver.com → 애플리케이션 등록         ║
+  ║  2. 로그인 API 사용 설정, 콜백 URL 등록                     ║
+  ║  3. main.js 상단 NAVER_CLIENT_ID, NAVER_REDIRECT_URI 교체   ║
+  ╚══════════════════════════════════════════════════════════════╝
+-->
+<!DOCTYPE html>
+<html lang="ko" data-theme="dark" data-layout="pc">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>THE OKTOP | 옥탑을 수익으로 바꾸다</title>
+  <meta name="description" content="THE OKTOP — 방치된 옥탑 공간을 프리미엄 수익형 공간으로 변환하는 전문 리노베이션 서비스">
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website">
+  <meta property="og:title"       content="THE OKTOP | 옥탑을 수익으로 바꾸다">
+  <meta property="og:description" content="방치된 옥탑 공간을 프리미엄 수익형 공간으로 변환하는 전문 리노베이션 서비스. 무료 상담 신청">
+  <meta property="og:image"       content="logo_black.png">
+  <meta property="og:url"         content="">
+  <meta name="twitter:card"       content="summary_large_image">
+
+  <link rel="icon" type="image/png" href="logo_black.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Google Fonts: Playfair Display (display) | Noto Sans KR (body) | Montserrat (mono/label) -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700&family=Noto+Sans+KR:wght@400;500;700&family=Montserrat:wght@600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ══ SVG filter defs (shared by all logo instances) ══ -->
+  <svg aria-hidden="true" focusable="false"
+       style="position:absolute;width:0;height:0;overflow:hidden">
+    <defs>
+      <!-- Dark mode: logo lines → white, background → transparent -->
+      <filter id="logo-to-white" x="0" y="0" width="100%" height="100%"
+              color-interpolation-filters="sRGB">
+        <feColorMatrix type="luminanceToAlpha" result="luma"/>
+        <feComponentTransfer in="luma" result="mask">
+          <feFuncA type="linear" slope="8" intercept="-2"/>
+        </feComponentTransfer>
+        <feFlood flood-color="#ffffff" flood-opacity="1" result="clr"/>
+        <feComposite in="clr" in2="mask" operator="in"/>
+      </filter>
+      <!-- Light mode: logo lines → near-black, background → transparent -->
+      <filter id="logo-to-black" x="0" y="0" width="100%" height="100%"
+              color-interpolation-filters="sRGB">
+        <feColorMatrix type="luminanceToAlpha" result="luma"/>
+        <feComponentTransfer in="luma" result="mask">
+          <feFuncA type="linear" slope="8" intercept="-2"/>
+        </feComponentTransfer>
+        <feFlood flood-color="#1a1a1a" flood-opacity="1" result="clr"/>
+        <feComposite in="clr" in2="mask" operator="in"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- ══════════════════════ NAVBAR ══════════════════════ -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-container">
+
+      <a href="#" class="nav-logo" aria-label="THE OKTOP 홈으로">
+        <svg class="logo-svg" viewBox="0 0 175 116"
+             xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <image class="logo-img-inner"
+                 href="logo_black.png"
+                 x="0" y="0" width="175" height="116"
+                 preserveAspectRatio="xMidYMid meet"/>
+        </svg>
+      </a>
+
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#service">서비스</a></li>
+        <li><a href="#projects">시공현장</a></li>
+        <li><a href="#map-search">주소검색</a></li>
+        <li><a href="#consultation">상담신청</a></li>
+      </ul>
+
+      <div class="nav-controls">
+        <button class="btn-icon" id="themeToggle" title="테마 전환" aria-label="테마 전환">
+          <span class="theme-icon">☀️</span>
+        </button>
+        <button class="btn-icon" id="layoutToggle" title="레이아웃 전환" aria-label="레이아웃 전환">
+          <span class="layout-icon">📱</span>
+        </button>
+        <a href="#consultation" class="btn-cta nav-cta">상담신청</a>
+        <button class="hamburger" id="hamburger" aria-label="메뉴 열기" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+
+    </div>
+  </nav>
+
+  <!-- ══════════════════════ MOBILE DRAWER ══════════════════════ -->
+  <div class="mobile-overlay" id="mobileOverlay" aria-hidden="true"></div>
+  <aside class="mobile-drawer" id="mobileDrawer" aria-label="모바일 메뉴">
+    <button class="drawer-close" id="drawerClose" aria-label="메뉴 닫기">✕</button>
+    <a href="#" class="drawer-logo" aria-label="THE OKTOP 홈으로">
+      <svg class="logo-svg logo-svg-drawer" viewBox="0 0 175 116"
+           xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <image class="logo-img-inner"
+               href="logo_black.png"
+               x="0" y="0" width="175" height="116"
+               preserveAspectRatio="xMidYMid meet"/>
+      </svg>
+    </a>
+    <ul class="drawer-links">
+      <li><a href="#service">서비스</a></li>
+      <li><a href="#projects">시공현장</a></li>
+      <li><a href="#map-search">주소검색</a></li>
+      <li><a href="#consultation">상담신청</a></li>
+    </ul>
+    <a href="#consultation" class="btn-cta drawer-cta">무료 상담 신청</a>
+  </aside>
+
+  <!-- ══════════════════════ HERO ══════════════════════ -->
+  <section class="hero" id="hero">
+
+    <div class="hero-bg" aria-hidden="true">
+      <svg class="hero-pattern" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <pattern id="geo" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="80" y2="80" class="p-line"/>
+            <line x1="80" y1="0" x2="0" y2="80" class="p-line"/>
+            <polygon points="40,8 72,40 40,72 8,40" class="p-diamond"/>
+            <circle cx="40" cy="40" r="6" class="p-dot"/>
+          </pattern>
+          <pattern id="geo2" x="40" y="40" width="80" height="80" patternUnits="userSpaceOnUse">
+            <rect x="20" y="20" width="40" height="40" class="p-rect"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#geo)"/>
+        <rect width="100%" height="100%" fill="url(#geo2)"/>
+      </svg>
+
+      <div class="hero-glow hero-glow-1"></div>
+      <div class="hero-glow hero-glow-2"></div>
+    </div>
+
+    <div class="hero-content">
+      <p class="hero-eyebrow">PREMIUM ROOFTOP RENOVATION</p>
+      <h1 class="hero-title">THE OKTOP</h1>
+      <div class="hero-rule"></div>
+      <p class="hero-subtitle">옥탑을 수익으로 바꾸다</p>
+      <p class="hero-desc">방치된 옥탑 공간을 프리미엄 수익형 공간으로 변환하는<br>전문 리노베이션 서비스</p>
+      <a href="#consultation" class="btn-hero">무료 상담 신청</a>
+    </div>
+
+    <div class="scroll-indicator" aria-hidden="true">
+      <div class="scroll-line"></div>
+      <span class="scroll-label">SCROLL</span>
+    </div>
+
+  </section>
+
+  <!-- ══════════════════════ SERVICE ══════════════════════ -->
+  <section class="section" id="service">
+    <div class="container">
+
+      <header class="section-header">
+        <p class="section-label">OUR SERVICES</p>
+        <h2 class="section-title">서비스 소개</h2>
+        <p class="section-desc">옥탑 공간의 잠재적 가치를 최대화하는 전문 서비스를 제공합니다</p>
+      </header>
+
+      <!-- ① 서비스 카드 6개 (PC 3열 / 모바일 1열) -->
+      <div class="svc-grid">
+
+        <article class="svc-card" data-animate data-delay="0">
+          <div class="svc-icon">
+            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <path d="M6 34V18L20 6L34 18V34" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <rect x="14" y="22" width="12" height="12" rx="1" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 16l8-8 8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <line x1="20" y1="22" x2="20" y2="14" stroke="currentColor" stroke-width="1.4" stroke-dasharray="2 2"/>
+            </svg>
+          </div>
+          <h3>옥탑 설계 컨설팅</h3>
+          <p>수익성 분석 기반 최적 설계 제안. 용도별 레이아웃 시뮬레이션, 층고·채광·단열 조건 검토, 투자 대비 수익률 예측 리포트를 제공합니다.</p>
+        </article>
+
+        <article class="svc-card" data-animate data-delay="1">
+          <div class="svc-icon">
+            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <rect x="6" y="28" width="28" height="4" rx="1" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M12 28V20M20 28V14M28 28V22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <circle cx="20" cy="10" r="3" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M10 20h20" stroke="currentColor" stroke-width="1.2" stroke-dasharray="2 2"/>
+            </svg>
+          </div>
+          <h3>구조 안전 진단</h3>
+          <p>기존 건물 하중 분석 및 보강 솔루션. 옥탑 증축 전 필수 구조 안전성 검토, 철근·콘크리트 상태 평가, 적정 보강 공법을 제안합니다.</p>
+        </article>
+
+        <article class="svc-card" data-animate data-delay="2">
+          <div class="svc-icon">
+            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <path d="M8 20H4L20 6L36 20H32" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 20V34H28V20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="32" cy="32" r="5.5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M30 32l1.5 1.5 3-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>인허가 대행</h3>
+          <p>복잡한 행정 절차를 원스톱으로 처리. 건축허가·용도변경·사용승인까지 관할 구청 대행 신청, 법규 검토, 서류 준비를 일괄 지원합니다.</p>
+        </article>
+
+        <article class="svc-card" data-animate data-delay="3">
+          <div class="svc-icon">
+            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <rect x="6" y="16" width="28" height="18" rx="2" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M6 20h28" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M13 16V12a7 7 0 0114 0v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <circle cx="20" cy="28" r="2.5" stroke="currentColor" stroke-width="1.6"/>
+              <line x1="20" y1="30.5" x2="20" y2="33" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>시공 일괄 도급</h3>
+          <p>철골·방수·단열·마감 전 공정 책임 시공. 검증된 전문 협력사 네트워크와 공정별 품질 관리 시스템으로 일정과 예산을 철저히 준수합니다.</p>
+        </article>
+
+        <article class="svc-card" data-animate data-delay="4">
+          <div class="svc-icon">
+            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <path d="M6 34h28" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M10 34V24h6v10M17 34V18h6v16M24 34V22h6v12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 12l12-6 12 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>인테리어 마감</h3>
+          <p>임대·상업 목적별 맞춤 인테리어. 단기임대·카페·오피스 등 운영 목적에 최적화된 자재·조명·가구 선택으로 공간 가치를 극대화합니다.</p>
+        </article>
+
+        <article class="svc-card" data-animate data-delay="5">
+          <div class="svc-icon">
+            <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+              <path d="M8 32L20 10L32 32" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 25h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <circle cx="32" cy="12" r="5" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M30.5 12l1.5 1.5 2.5-2.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>수익화 전략 컨설팅</h3>
+          <p>임대 운영 및 수익률 극대화 전략. 단기·장기 임대 시세 분석, 플랫폼 등록 지원, 운영 노하우 교육, 수익률 모니터링 리포팅을 제공합니다.</p>
+        </article>
+
+      </div>
+
+      <!-- ② USP 강점 섹션 -->
+      <div class="usp-section">
+        <div class="usp-grid">
+
+          <div class="usp-card" data-animate data-delay="0">
+            <div class="usp-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none">
+                <path d="M8 40V20L24 8L40 20V40" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M18 40V28h12v12" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="usp-number">
+              <span class="counter" data-target="147" data-suffix="건">0건</span>
+            </div>
+            <p class="usp-label">누적 완공 건수</p>
+            <p class="usp-desc">수도권 전역 147건의 옥탑 리노베이션 프로젝트를 성공적으로 완료했습니다.</p>
+          </div>
+
+          <div class="usp-card" data-animate data-delay="1">
+            <div class="usp-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none">
+                <circle cx="24" cy="24" r="16" stroke="currentColor" stroke-width="2"/>
+                <path d="M16 24l5 5 11-11" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="usp-number">
+              <span class="counter" data-target="98" data-suffix="%">0%</span>
+            </div>
+            <p class="usp-label">고객 만족도</p>
+            <p class="usp-desc">시공 완료 후 고객 설문 기준 98%의 높은 만족도를 지속적으로 유지합니다.</p>
+          </div>
+
+          <div class="usp-card" data-animate data-delay="2">
+            <div class="usp-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none">
+                <path d="M8 36L20 22L28 30L40 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M33 14h7v7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="usp-number">
+              <span class="counter" data-target="12.4" data-suffix="%" data-decimals="1">0%</span>
+            </div>
+            <p class="usp-label">평균 수익률</p>
+            <p class="usp-desc">THE OKTOP 시공 건물의 연평균 임대 수익률로 시장 평균의 2배 이상입니다.</p>
+          </div>
+
+          <div class="usp-card" data-animate data-delay="3">
+            <div class="usp-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none">
+                <path d="M24 6l5 10 11 1.5-8 7.5 2 11-10-5.5-10 5.5 2-11-8-7.5 11-1.5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <div class="usp-number usp-text">3년</div>
+            <p class="usp-label">하자보수 보증</p>
+            <p class="usp-desc">준공 후 3년간 방수·구조·마감 하자에 대해 무상 보수를 보증합니다.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ③ 프로세스 타임라인 -->
+      <div class="process-section">
+        <p class="section-label" style="text-align:center;margin-bottom:16px;">HOW WE WORK</p>
+        <h3 class="process-title">시공 프로세스</h3>
+        <div class="process-timeline">
+
+          <div class="process-step" data-animate data-delay="0">
+            <div class="step-circle"><span class="step-num">1</span></div>
+            <div class="step-body">
+              <h4>무료상담</h4>
+              <p>현황 청취 및 수익화 방향 제안</p>
+            </div>
+          </div>
+          <div class="step-arrow-connector" aria-hidden="true"></div>
+
+          <div class="process-step" data-animate data-delay="1">
+            <div class="step-circle"><span class="step-num">2</span></div>
+            <div class="step-body">
+              <h4>현장조사</h4>
+              <p>구조·하중·법규 현장 실사</p>
+            </div>
+          </div>
+          <div class="step-arrow-connector" aria-hidden="true"></div>
+
+          <div class="process-step" data-animate data-delay="2">
+            <div class="step-circle"><span class="step-num">3</span></div>
+            <div class="step-body">
+              <h4>설계확정</h4>
+              <p>도면 작성 및 공사비 확정</p>
+            </div>
+          </div>
+          <div class="step-arrow-connector" aria-hidden="true"></div>
+
+          <div class="process-step" data-animate data-delay="3">
+            <div class="step-circle"><span class="step-num">4</span></div>
+            <div class="step-body">
+              <h4>인허가</h4>
+              <p>행정 서류 대행 및 허가 취득</p>
+            </div>
+          </div>
+          <div class="step-arrow-connector" aria-hidden="true"></div>
+
+          <div class="process-step" data-animate data-delay="4">
+            <div class="step-circle"><span class="step-num">5</span></div>
+            <div class="step-body">
+              <h4>착공</h4>
+              <p>구조·방수·설비·마감 순차 시공</p>
+            </div>
+          </div>
+          <div class="step-arrow-connector" aria-hidden="true"></div>
+
+          <div class="process-step" data-animate data-delay="5">
+            <div class="step-circle"><span class="step-num">6</span></div>
+            <div class="step-body">
+              <h4>준공</h4>
+              <p>사용승인 취득 및 공간 인도</p>
+            </div>
+          </div>
+          <div class="step-arrow-connector" aria-hidden="true"></div>
+
+          <div class="process-step" data-animate data-delay="6">
+            <div class="step-circle step-circle-gold"><span class="step-num">7</span></div>
+            <div class="step-body">
+              <h4>사후관리</h4>
+              <p>3년 하자보수 및 운영 지원</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════ PROJECTS ══════════════════════ -->
+  <section class="section section-alt" id="projects">
+    <div class="container">
+
+      <header class="section-header">
+        <p class="section-label">CONSTRUCTION SITES</p>
+        <h2 class="section-title">시공현장</h2>
+        <p class="section-desc">THE OKTOP이 진행 중이거나 완공한 실제 프로젝트들을 확인해보세요</p>
+      </header>
+
+      <!-- 필터 버튼 -->
+      <div class="filter-bar" role="group" aria-label="프로젝트 필터">
+        <button class="filter-btn active" data-filter="all">전체</button>
+        <button class="filter-btn" data-filter="ongoing">시공중</button>
+        <button class="filter-btn" data-filter="complete">완공</button>
+      </div>
+
+      <!-- 프로젝트 카드 -->
+      <div class="projects-grid" id="projectsGrid">
+
+        <!-- Project 1: 시공중 80% -->
+        <article class="project-card" data-status="ongoing" data-modal="modal-1"
+                 data-animate data-delay="0" role="button" tabindex="0"
+                 aria-label="동작구 사당동 옥탑 주거 상세보기">
+          <div class="project-img">
+            <img src="theoktop_no01.png" alt="동작구 사당동 옥탑 주거" style="width:100%;height:100%;object-fit:cover;display:block;">
+            <div class="project-badges">
+              <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
+              <span class="project-tag">주거용</span>
+            </div>
+          </div>
+          <div class="project-info">
+            <h3>동작구 사당동 옥탑 주거</h3>
+            <div class="project-meta">
+              <span>📍 서울시 동작구 사당동</span>
+              <span>📐 25㎡</span>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-header">
+                <span>공정 진행률</span><strong>80%</strong>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" data-progress="80"></div>
+              </div>
+            </div>
+            <p class="project-schedule">예정 준공: <strong>2026년 9월</strong></p>
+          </div>
+        </article>
+
+        <!-- Project 2: 시공중 80% -->
+        <article class="project-card" data-status="ongoing" data-modal="modal-2"
+                 data-animate data-delay="1" role="button" tabindex="0"
+                 aria-label="동작구 사당동 옥탑 주거 상세보기">
+          <div class="project-img">
+            <img src="theoktop_no02.png" alt="동작구 사당동 옥탑 주거" style="width:100%;height:100%;object-fit:cover;display:block;">
+            <div class="project-badges">
+              <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
+              <span class="project-tag">주거용</span>
+            </div>
+          </div>
+          <div class="project-info">
+            <h3>동작구 사당동 옥탑 주거</h3>
+            <div class="project-meta">
+              <span>📍 서울시 동작구 사당동</span>
+              <span>📐 27㎡</span>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-header">
+                <span>공정 진행률</span><strong>80%</strong>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" data-progress="80"></div>
+              </div>
+            </div>
+            <p class="project-schedule">예정 준공: <strong>2026년 11월</strong></p>
+          </div>
+        </article>
+
+        <!-- Project 3: 시공중 70% -->
+        <article class="project-card" data-status="ongoing" data-modal="modal-3"
+                 data-animate data-delay="2" role="button" tabindex="0"
+                 aria-label="동작구 흑석동 옥탑 주거 상세보기">
+          <div class="project-img">
+            <div class="project-placeholder">
+              <span>PROJECT 03</span>
+              <p>동작구 흑석동</p>
+            </div>
+            <div class="project-badges">
+              <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
+              <span class="project-tag">주거용</span>
+            </div>
+          </div>
+          <div class="project-info">
+            <h3>동작구 흑석동 옥탑 주거</h3>
+            <div class="project-meta">
+              <span>📍 서울시 동작구 흑석동</span>
+              <span>📐 70㎡</span>
+            </div>
+            <div class="progress-wrap">
+              <div class="progress-header">
+                <span>공정 진행률</span><strong>70%</strong>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" data-progress="70"></div>
+              </div>
+            </div>
+            <p class="project-schedule">예정 준공: <strong>2026년 12월</strong></p>
+          </div>
+        </article>
+
+      </div>
+
+    </div>
+
+    <!-- 모달 오버레이 -->
+    <div class="modal-overlay" id="modalOverlay" hidden aria-modal="true" role="dialog">
+
+      <!-- Modal 1 -->
+      <div class="modal" id="modal-1" hidden>
+        <button class="modal-close" aria-label="닫기">✕</button>
+        <div class="modal-body">
+          <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
+          <h2 class="modal-title">동작구 사당동 옥탑 주거</h2>
+          <div class="modal-gallery">
+            <div class="gallery-item"><span>BEFORE</span></div>
+            <div class="gallery-item"><span>DESIGN</span></div>
+            <div class="gallery-item"><span>PROGRESS</span></div>
+          </div>
+          <div class="modal-details">
+            <div class="detail-row"><span>위치</span><strong>서울시 동작구 사당동</strong></div>
+            <div class="detail-row"><span>면적</span><strong>25㎡</strong></div>
+            <div class="detail-row"><span>유형</span><strong>주거용</strong></div>
+            <div class="detail-row"><span>공정률</span><strong>80%</strong></div>
+            <div class="detail-row"><span>예정 준공</span><strong>2026년 9월</strong></div>
+          </div>
+          <p class="modal-desc">동작구 사당동 옥탑을 쾌적한 주거공간으로 리노베이션하는 프로젝트입니다. 단열 보강, 내외부 마감재 교체, 루프탑 테라스 조성을 포함한 전면 리모델링을 진행 중이며 현재 공정률 80%를 달성하였습니다.</p>
+          <a href="#consultation" class="btn-cta modal-cta">상담 신청하기</a>
+        </div>
+      </div>
+
+      <!-- Modal 2 -->
+      <div class="modal" id="modal-2" hidden>
+        <button class="modal-close" aria-label="닫기">✕</button>
+        <div class="modal-body">
+          <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
+          <h2 class="modal-title">동작구 사당동 옥탑 주거</h2>
+          <div class="modal-gallery">
+            <div class="gallery-item"><span>BEFORE</span></div>
+            <div class="gallery-item"><span>DESIGN</span></div>
+            <div class="gallery-item"><span>PROGRESS</span></div>
+          </div>
+          <div class="modal-details">
+            <div class="detail-row"><span>위치</span><strong>서울시 동작구 사당동</strong></div>
+            <div class="detail-row"><span>면적</span><strong>27㎡</strong></div>
+            <div class="detail-row"><span>유형</span><strong>주거용</strong></div>
+            <div class="detail-row"><span>공정률</span><strong>80%</strong></div>
+            <div class="detail-row"><span>예정 준공</span><strong>2026년 11월</strong></div>
+          </div>
+          <p class="modal-desc">동작구 사당동 옥탑을 쾌적하고 실용적인 주거공간으로 탈바꿈하는 프로젝트입니다. 단열 및 방수 보강, 내부 마감재 교체, 생활 편의시설 설치를 포함한 전면 리모델링을 진행 중이며 현재 공정률 80%를 달성하였습니다.</p>
+          <a href="#consultation" class="btn-cta modal-cta">상담 신청하기</a>
+        </div>
+      </div>
+
+      <!-- Modal 3 -->
+      <div class="modal" id="modal-3" hidden>
+        <button class="modal-close" aria-label="닫기">✕</button>
+        <div class="modal-body">
+          <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
+          <h2 class="modal-title">동작구 흑석동 옥탑 주거</h2>
+          <div class="modal-gallery">
+            <div class="gallery-item"><span>BEFORE</span></div>
+            <div class="gallery-item"><span>DESIGN</span></div>
+            <div class="gallery-item"><span>PROGRESS</span></div>
+          </div>
+          <div class="modal-details">
+            <div class="detail-row"><span>위치</span><strong>서울시 동작구 흑석동</strong></div>
+            <div class="detail-row"><span>면적</span><strong>70㎡</strong></div>
+            <div class="detail-row"><span>유형</span><strong>주거용</strong></div>
+            <div class="detail-row"><span>공정률</span><strong>70%</strong></div>
+            <div class="detail-row"><span>예정 준공</span><strong>2026년 12월</strong></div>
+          </div>
+          <p class="modal-desc">동작구 흑석동 옥탑을 현대적인 주거공간으로 리노베이션하는 프로젝트입니다. 단열 및 방수 보강, 내외부 마감 교체, 루프탑 테라스 조성을 포함한 전면 리모델링을 진행 중이며 현재 공정률 70%를 달성하였습니다.</p>
+          <a href="#consultation" class="btn-cta modal-cta">상담 신청하기</a>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════════════ MAP SEARCH ══════════════════════ -->
+  <!--
+    네이버 지도 API 사용법:
+    1. https://www.ncloud.com 에서 Application 등록
+    2. Maps, Geocoding 서비스 활성화 후 Client ID 발급
+    3. 아래 YOUR_NAVER_CLIENT_ID를 발급받은 ID로 교체
+  -->
+  <script src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=YOUR_NAVER_CLIENT_ID&submodules=geocoder" defer></script>
+
+  <section class="section" id="map-search">
+    <div class="container">
+
+      <header class="section-header">
+        <p class="section-label">ADDRESS SEARCH</p>
+        <h2 class="section-title">주소검색</h2>
+        <p class="section-desc">내 건물 옥탑의 수익화 가능성을 바로 확인해보세요</p>
+      </header>
+
+      <div class="map-layout">
+
+        <!-- 좌측: 검색 + 지도 (60%) -->
+        <div class="map-left">
+
+          <div class="search-bar" role="search">
+            <input
+              type="text"
+              class="search-input"
+              id="addressInput"
+              placeholder="주소를 입력하세요 (예: 서울시 마포구 합정동)"
+              aria-label="건물 주소 검색"
+              autocomplete="off"
+            >
+            <button class="btn-loc" id="locBtn" type="button" title="현재 위치 검색" aria-label="현재 위치 사용">📍</button>
+            <button class="btn-search" id="searchBtn" type="button">검색</button>
+          </div>
+
+          <!-- 최근 검색 -->
+          <div class="recent-wrap" id="recentWrap" style="display:none">
+            <span class="recent-label">최근</span>
+            <div class="recent-tags" id="recentTags"></div>
+            <button class="recent-clear" id="recentClear" type="button">전체삭제</button>
+          </div>
+
+          <!-- 네이버 지도 -->
+          <div class="naver-map-container" aria-label="지도 영역">
+            <div id="naverMap"></div>
+
+            <!-- Idle overlay (hidden once map loads) -->
+            <div class="map-idle" id="mapIdle" aria-hidden="false">
+              <svg class="map-grid" xmlns="http://www.w3.org/2000/svg" width="100%" height="100%" aria-hidden="true" style="position:absolute;inset:0;pointer-events:none">
+                <defs>
+                  <pattern id="mapTile" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+                    <rect width="40" height="40" fill="none" stroke="currentColor" stroke-width="0.4" opacity="0.15"/>
+                  </pattern>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#mapTile)"/>
+              </svg>
+              <div class="map-icon-wrap" aria-hidden="true">
+                <svg width="44" height="44" viewBox="0 0 48 48" fill="none">
+                  <circle cx="24" cy="21" r="11" stroke="currentColor" stroke-width="1.5"/>
+                  <circle cx="24" cy="21" r="4" fill="currentColor" opacity="0.4"/>
+                  <path d="M24 32 Q16 40 14 46" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                  <path d="M24 32 Q32 40 34 46" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                </svg>
+              </div>
+              <p>주소를 입력하면 해당 지역의<br>수익화 가능성을 분석합니다</p>
+            </div>
+
+            <!-- Score result (shown after search) -->
+            <div class="map-result" id="mapResult" hidden aria-live="polite" style="position:absolute;bottom:12px;left:12px;right:12px;z-index:2">
+              <div class="result-header">
+                <h4 id="resultAddress"></h4>
+                <span class="result-badge" id="resultBadge"></span>
+              </div>
+              <div class="score-track">
+                <div class="score-fill" id="scoreFill" role="progressbar" aria-valuemin="0" aria-valuemax="100"></div>
+              </div>
+              <div class="score-labels">
+                <span>수익화 가능성 지수</span>
+                <strong id="scoreValue"></strong>
+              </div>
+              <p class="score-comment" id="scoreComment"></p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 우측: 건물 정보 카드 (40%) -->
+        <div class="map-right">
+
+          <!-- 검색 전 idle -->
+          <div class="building-idle" id="buildingIdle">
+            <div class="building-idle-icon" aria-hidden="true">🏢</div>
+            <p>주소를 검색하면<br>건물 정보를 확인할 수 있습니다</p>
+          </div>
+
+          <!-- 검색 후 카드 (hidden by default) -->
+          <div class="building-card" id="buildingCard" hidden>
+            <div class="building-header">
+              <span class="building-label">BUILDING INFO</span>
+              <p class="building-name" id="buildingName">—</p>
+              <p class="building-addr" id="buildingAddrText">—</p>
+            </div>
+            <div class="building-specs">
+              <div class="spec-row">
+                <span>추정 용도</span>
+                <strong id="specUse">—</strong>
+              </div>
+              <div class="spec-row">
+                <span>토지 면적</span>
+                <strong id="specArea">—</strong>
+              </div>
+              <div class="spec-row">
+                <span>건물 층수</span>
+                <strong id="specFloors">—</strong>
+              </div>
+              <div class="spec-row">
+                <span>옥탑 적합도</span>
+                <strong id="specFit">—</strong>
+              </div>
+            </div>
+            <a href="#consultation" class="btn-consult-addr" id="consultAddrBtn">이 건물 상담 신청하기</a>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ══════════════════════ CONSULTATION ══════════════════════ -->
+  <section class="section section-alt" id="consultation">
+    <div class="container">
+
+      <header class="section-header">
+        <p class="section-label">FREE CONSULTATION</p>
+        <h2 class="section-title">무료 상담 신청</h2>
+        <p class="section-desc">전문가와 1:1 무료 상담으로 내 옥탑의 가능성을 확인하세요</p>
+      </header>
+
+      <!-- ① 로그인/가입 패널 (비로그인 시) -->
+      <div class="auth-panel" id="authPanel">
+        <div class="auth-card">
+
+          <!-- 탭 -->
+          <div class="auth-tabs" role="tablist">
+            <button class="auth-tab active" role="tab" aria-selected="true"
+                    data-tab="signup" id="tabBtnSignup">직접 가입</button>
+            <button class="auth-tab" role="tab" aria-selected="false"
+                    data-tab="naver" id="tabBtnNaver">네이버 로그인</button>
+          </div>
+
+          <!-- 직접 가입 -->
+          <div class="auth-pane" id="paneSignup" role="tabpanel">
+            <form class="auth-form" id="signupForm" novalidate>
+
+              <div class="form-group">
+                <label for="signupName">이름 <span class="required">*</span></label>
+                <input type="text" id="signupName" name="signupName"
+                       placeholder="홍길동" required autocomplete="name">
+                <span class="field-error" id="errSignupName"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="signupEmail">이메일 <span class="required">*</span></label>
+                <input type="email" id="signupEmail" name="signupEmail"
+                       placeholder="example@email.com" required autocomplete="email">
+                <span class="field-error" id="errSignupEmail"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="signupPhone">휴대폰번호 <span class="required">*</span></label>
+                <div class="input-action-row">
+                  <input type="tel" id="signupPhone" name="signupPhone"
+                         placeholder="010-0000-0000" required autocomplete="tel">
+                  <button type="button" class="btn-inline" id="sendCodeBtn">인증번호 받기</button>
+                </div>
+                <span class="field-error" id="errSignupPhone"></span>
+              </div>
+
+              <div class="form-group" id="verifyGroup" hidden>
+                <label for="verifyCode">인증번호 <span class="required">*</span></label>
+                <div class="input-action-row">
+                  <div class="input-timer-wrap">
+                    <input type="text" id="verifyCode" name="verifyCode"
+                           placeholder="인증번호 6자리" maxlength="6" inputmode="numeric">
+                    <span class="verify-timer" id="verifyTimer">01:00</span>
+                  </div>
+                  <button type="button" class="btn-inline" id="confirmCodeBtn">확인</button>
+                </div>
+                <span class="field-error" id="errVerifyCode"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="signupPw">비밀번호 <span class="required">*</span></label>
+                <input type="password" id="signupPw" name="signupPw"
+                       placeholder="8자 이상 영문+숫자" required autocomplete="new-password">
+                <span class="field-error" id="errSignupPw"></span>
+              </div>
+
+              <div class="form-group">
+                <label for="signupPwConfirm">비밀번호 확인 <span class="required">*</span></label>
+                <input type="password" id="signupPwConfirm" name="signupPwConfirm"
+                       placeholder="비밀번호를 다시 입력" required autocomplete="new-password">
+                <span class="field-error" id="errSignupPwConfirm"></span>
+              </div>
+
+              <button type="submit" class="btn-submit" id="signupBtn">가입 완료</button>
+            </form>
+          </div>
+
+          <!-- 네이버 로그인 -->
+          <div class="auth-pane" id="paneNaver" role="tabpanel" hidden>
+            <div class="naver-login-wrap">
+              <p class="naver-login-desc">네이버 아이디로 간편하게 로그인하세요</p>
+              <!-- TODO: 네이버 클라우드 플랫폼에서 발급한 Client ID 입력 -->
+              <button type="button" class="btn-naver" id="naverLoginBtn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+                  <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
+                </svg>
+                네이버 아이디로 로그인
+              </button>
+              <p class="naver-login-note">로그인 시 THE OKTOP 서비스 이용약관에 동의하게 됩니다</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ② 상담 신청 폼 (로그인 후) -->
+      <div class="consult-panel" id="consultPanel" hidden>
+
+        <div class="consult-user-bar" id="consultUserBar">
+          <span id="consultUserName">사용자</span>님, 상담 신청을 진행해주세요
+          <button type="button" class="btn-logout" id="logoutBtn">로그아웃</button>
+        </div>
+
+        <div class="consultation-wrapper">
+
+          <form class="consultation-form" id="consultForm" novalidate>
+
+            <!-- 상담 유형 -->
+            <div class="form-group">
+              <label class="form-label-block">상담 유형 <span class="required">*</span></label>
+              <div class="radio-group" id="consultTypeGroup">
+                <label class="radio-label">
+                  <input type="radio" name="consultType" value="new" required>
+                  <span class="radio-custom"></span>신규 시공
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="consultType" value="remodel">
+                  <span class="radio-custom"></span>리모델링
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="consultType" value="consult">
+                  <span class="radio-custom"></span>컨설팅 상담
+                </label>
+              </div>
+              <span class="field-error" id="errConsultType"></span>
+            </div>
+
+            <!-- 건물 주소 -->
+            <div class="form-group">
+              <label for="addr">건물 주소 <span class="required">*</span></label>
+              <div class="input-action-row">
+                <input type="text" id="addr" name="addr"
+                       placeholder="옥탑이 있는 건물 주소" required autocomplete="street-address">
+                <a href="#map-search" class="btn-inline">검색</a>
+              </div>
+              <span class="field-error" id="errAddr"></span>
+            </div>
+
+            <div class="form-row">
+              <!-- 건물 층수 -->
+              <div class="form-group">
+                <label for="floors">건물 층수</label>
+                <input type="number" id="floors" name="floors"
+                       placeholder="예: 5" min="1" max="50">
+              </div>
+
+              <!-- 예산 범위 -->
+              <div class="form-group">
+                <label for="budget">예산 범위</label>
+                <select id="budget" name="budget">
+                  <option value="">선택해주세요</option>
+                  <option value="lt30">3천만원 미만</option>
+                  <option value="30to50">3천~5천만원</option>
+                  <option value="50to100">5천만~1억원</option>
+                  <option value="gt100">1억원 이상</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- 현재 옥탑 유무 -->
+            <div class="form-group">
+              <label class="form-label-block">현재 옥탑 유무</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="hasRooftop" value="yes">
+                  <span class="radio-custom"></span>있음
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="hasRooftop" value="no">
+                  <span class="radio-custom"></span>없음
+                </label>
+              </div>
+            </div>
+
+            <!-- 희망 용도 (복수 선택) -->
+            <div class="form-group">
+              <label class="form-label-block">희망 용도 (복수 선택 가능)</label>
+              <div class="check-group">
+                <label class="check-label">
+                  <input type="checkbox" name="purpose" value="residence">
+                  <span class="check-custom"></span>주거
+                </label>
+                <label class="check-label">
+                  <input type="checkbox" name="purpose" value="rental">
+                  <span class="check-custom"></span>임대
+                </label>
+                <label class="check-label">
+                  <input type="checkbox" name="purpose" value="commercial">
+                  <span class="check-custom"></span>상업
+                </label>
+                <label class="check-label">
+                  <input type="checkbox" name="purpose" value="other">
+                  <span class="check-custom"></span>기타
+                </label>
+              </div>
+            </div>
+
+            <!-- 희망 공사 시기 -->
+            <div class="form-row">
+              <div class="form-group">
+                <label for="schedYear">희망 공사 시기</label>
+                <div class="select-row">
+                  <select id="schedYear" name="schedYear">
+                    <option value="">연도</option>
+                    <option value="2026">2026년</option>
+                    <option value="2027">2027년</option>
+                    <option value="2028">2028년</option>
+                    <option value="2029">2029년</option>
+                  </select>
+                  <select id="schedMonth" name="schedMonth">
+                    <option value="">월</option>
+                    <option value="1">1월</option><option value="2">2월</option>
+                    <option value="3">3월</option><option value="4">4월</option>
+                    <option value="5">5월</option><option value="6">6월</option>
+                    <option value="7">7월</option><option value="8">8월</option>
+                    <option value="9">9월</option><option value="10">10월</option>
+                    <option value="11">11월</option><option value="12">12월</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- 문의 내용 -->
+            <div class="form-group">
+              <label for="message">문의 내용</label>
+              <textarea id="message" name="message" rows="4"
+                        placeholder="궁금한 점이나 요청 사항을 자유롭게 적어주세요"></textarea>
+            </div>
+
+            <!-- ③ 등기부등본 드롭존 -->
+            <div class="form-group">
+              <label class="form-label-block">등기부등본 업로드 <span class="label-opt">(선택)</span></label>
+              <div class="drop-zone" id="dropZone" role="button" tabindex="0"
+                   aria-label="등기부등본 파일 업로드 영역">
+                <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png"
+                       multiple hidden aria-hidden="true">
+                <div class="drop-zone-idle" id="dropIdle">
+                  <div class="drop-icon" aria-hidden="true">
+                    <svg width="36" height="36" viewBox="0 0 40 40" fill="none">
+                      <rect x="6" y="4" width="20" height="28" rx="2" stroke="currentColor" stroke-width="1.6"/>
+                      <path d="M18 4v8h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                      <path d="M28 26v10M23 31l5-5 5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                  </div>
+                  <p class="drop-text">등기부등본을 드래그하거나 클릭하여 업로드하세요</p>
+                  <p class="drop-hint">PDF, JPG, PNG 지원 · 최대 20MB · 최대 3개</p>
+                </div>
+              </div>
+              <div class="drop-files" id="dropFiles"></div>
+            </div>
+
+            <!-- ④ 제출 버튼 -->
+            <button type="submit" class="btn-submit" id="submitBtn">
+              <span class="btn-submit-text">상담 신청하기</span>
+              <span class="btn-submit-loading" aria-hidden="true">처리 중...</span>
+            </button>
+
+          </form>
+
+          <aside class="consultation-aside">
+            <div class="aside-item" data-animate data-delay="0">
+              <div class="aside-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z" fill="currentColor"/>
+                </svg>
+              </div>
+              <div>
+                <h4>빠른 응답</h4>
+                <p>영업일 기준 24시간 내 담당자가 직접 연락드립니다</p>
+              </div>
+            </div>
+            <div class="aside-item" data-animate data-delay="1">
+              <div class="aside-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
+                </svg>
+              </div>
+              <div>
+                <h4>현장 방문 무료</h4>
+                <p>서울 및 수도권 내 현장 방문 상담은 무료로 진행합니다</p>
+              </div>
+            </div>
+            <div class="aside-item" data-animate data-delay="2">
+              <div class="aside-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6h-6z" fill="currentColor"/>
+                </svg>
+              </div>
+              <div>
+                <h4>수익 시뮬레이션</h4>
+                <p>상담 시 예상 수익 및 투자 회수 기간을 분석해드립니다</p>
+              </div>
+            </div>
+            <div class="aside-item" data-animate data-delay="3">
+              <div class="aside-icon" aria-hidden="true">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                  <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/>
+                </svg>
+              </div>
+              <div>
+                <h4>비밀 보장</h4>
+                <p>상담 내용과 개인 정보는 철저히 비밀이 보장됩니다</p>
+              </div>
+            </div>
+          </aside>
+
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ══════════════ 상담 완료 모달 ══════════════ -->
+  <div class="modal-overlay" id="consultSuccessOverlay" hidden aria-modal="true" role="dialog"
+       aria-labelledby="successTitle">
+    <div class="modal success-modal">
+      <div class="success-icon" aria-hidden="true">
+        <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+          <circle cx="28" cy="28" r="27" stroke="var(--gold-primary)" stroke-width="2"/>
+          <path d="M18 28l7 7 13-14" stroke="var(--gold-primary)" stroke-width="2.5"
+                stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <h2 class="success-title" id="successTitle">상담 신청이 완료되었습니다!</h2>
+      <div class="success-receipt">
+        접수번호 <strong id="receiptNo">#OKT-20260601-0042</strong>
+      </div>
+      <p class="success-desc">담당자가 1~2 영업일 내 연락드리겠습니다.<br>빠른 답변을 약속드립니다.</p>
+      <button type="button" class="btn-cta success-home" id="successHomeBtn">홈으로</button>
+    </div>
+  </div>
+
+  <!-- ══════════════ 에러 토스트 ══════════════ -->
+  <div class="toast" id="toast" role="alert" aria-live="assertive"></div>
+
+  <!-- ══════════════════════ FOOTER ══════════════════════ -->
+  <footer class="footer">
+    <div class="container">
+
+      <div class="footer-top">
+        <div class="footer-brand">
+          <p class="footer-logo">THE OKTOP</p>
+          <p class="footer-tagline">옥탑을 수익으로 바꾸다</p>
+          <address class="footer-info">
+            <p>사업자등록번호 : 000-00-00000</p>
+            <p>주소 : 경기도 파주시 문발동 531-2</p>
+            <p>전화 : 010-7300-3509</p>
+            <p>이메일 : hanielkim@naver.com</p>
+          </address>
+        </div>
+
+        <div class="footer-right">
+          <nav class="footer-nav" aria-label="푸터 내비게이션">
+            <a href="#service">서비스</a>
+            <a href="#projects">시공현장</a>
+            <a href="#map-search">주소검색</a>
+            <a href="#consultation">상담신청</a>
+          </nav>
+
+          <div class="footer-sns" aria-label="SNS 바로가기">
+            <!-- 인스타그램 -->
+            <a href="#" class="sns-btn" aria-label="인스타그램" target="_blank" rel="noopener">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+              </svg>
+            </a>
+            <!-- 유튜브 -->
+            <a href="#" class="sns-btn" aria-label="유튜브" target="_blank" rel="noopener">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+            </a>
+            <!-- 카카오톡 -->
+            <a href="#" class="sns-btn" aria-label="카카오톡 채널" target="_blank" rel="noopener">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M12 3C6.477 3 2 6.477 2 10.5c0 2.549 1.47 4.794 3.713 6.176-.163.593-.606 2.154-.695 2.489-.111.409.149.404.313.294.129-.088 2.043-1.389 2.868-1.952.575.079 1.168.12 1.801.12 5.523 0 10-3.477 10-7.5S17.523 3 12 3z"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <p class="footer-copy">© 2026 THE OKTOP. All rights reserved.</p>
+        <div class="footer-legal">
+          <a href="#">이용약관</a>
+          <a href="#">개인정보처리방침</a>
+        </div>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ══════════════ 스크롤 상단 버튼 ══════════════ -->
+  <button class="scroll-top" id="scrollTop" aria-label="페이지 상단으로" hidden>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 4l-8 8h5v8h6v-8h5z" fill="currentColor"/>
+    </svg>
+  </button>
+
+  <script src="main.js"></script>
+</body>
+</html>

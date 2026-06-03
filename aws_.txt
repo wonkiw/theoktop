@@ -1,0 +1,12 @@
+엔드포인트
+theoktop-db.cluster-cngm6kk6grax.ap-northeast-2.rds.amazonaws.com
+theoktop-db.cluster-ro-cngm6kk6grax.ap-northeast-2.rds.amazonaws.com
+
+데이터베이스 이름
+theoktop
+마스터 사용자 이름
+theoktop_admin
+
+
+postgresql
+superuser pwd : wonki
