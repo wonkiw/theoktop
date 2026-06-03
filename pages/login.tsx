@@ -1,38 +1,59 @@
 import { useState } from 'react'
 import { useRouter } from 'next/router'
+import Head from 'next/head'
 import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 
 const ERROR_MAP: Record<string, string> = {
-  'Invalid login credentials': '이메일 또는 비밀번호가 올바르지 않습니다.',
-  'Email not confirmed': '이메일 인증이 완료되지 않았습니다.',
-  'Too many requests': '잠시 후 다시 시도해주세요.',
+  'Invalid login credentials':   '이메일 또는 비밀번호가 올바르지 않습니다.',
+  'Email not confirmed':         '이메일 인증이 완료되지 않았습니다. 메일함을 확인해주세요.',
+  'Too many requests':           '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.',
+  'User not found':              '존재하지 않는 계정입니다.',
 }
 
 function localizeError(msg: string) {
-  return ERROR_MAP[msg] ?? msg
+  return ERROR_MAP[msg] ?? '로그인에 실패했습니다. 다시 시도해주세요.'
 }
 
 export default function LoginPage() {
   const router = useRouter()
-  const { error: queryError } = router.query
+  const { error: queryError, redirect: redirectParam } = router.query
 
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
 
+  const getRedirectTarget = () => {
+    if (typeof redirectParam === 'string' && redirectParam.startsWith('/')) {
+      return redirectParam
+    }
+    return '/mypage'
+  }
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (!email.trim()) {
+      setError('이메일을 입력해주세요.')
+      return
+    }
+    if (!password) {
+      setError('비밀번호를 입력해주세요.')
+      return
+    }
+
     setLoading(true)
-
-    const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
-
-    if (authError) {
-      setError(localizeError(authError.message))
-    } else {
-      router.push('/mypage')
+    try {
+      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      if (authError) {
+        setError(localizeError(authError.message))
+      } else {
+        router.push(getRedirectTarget())
+      }
+    } catch {
+      setError('네트워크 오류가 발생했습니다. 다시 시도해주세요.')
     }
     setLoading(false)
   }
@@ -53,79 +74,105 @@ export default function LoginPage() {
     window.location.href = '/api/auth/naver'
   }
 
-  const callbackError = queryError === 'auth_failed'   ? '로그인에 실패했습니다. 다시 시도해주세요.'
-                      : queryError === 'db_failed'     ? '계정 처리 중 오류가 발생했습니다.'
-                      : queryError === 'session_failed'? '세션 생성에 실패했습니다.'
-                      : null
+  const callbackError =
+    queryError === 'auth_failed'    ? '로그인에 실패했습니다. 다시 시도해주세요.'
+    : queryError === 'db_failed'    ? '계정 처리 중 오류가 발생했습니다.'
+    : queryError === 'session_failed' ? '세션 생성에 실패했습니다.'
+    : null
 
   return (
-    <div style={s.page}>
-      <div style={s.card}>
-        <h1 style={s.logo}>THE OKTOP</h1>
-        <h2 style={s.title}>로그인</h2>
+    <>
+      <Head><title>로그인 | THE OKTOP</title></Head>
+      <style>{`
+        .login-input:focus {
+          border-color: #111 !important;
+          box-shadow: 0 0 0 3px rgba(0,0,0,0.08);
+        }
+        @media (max-width: 480px) {
+          .login-card { padding: 36px 24px !important; }
+        }
+      `}</style>
 
-        {callbackError && <p style={s.error}>{callbackError}</p>}
+      <div style={s.page}>
+        <div style={s.card} className="login-card">
+          <h1 style={s.logo}>THE OKTOP</h1>
+          <h2 style={s.title}>로그인</h2>
 
-        <form onSubmit={handleLogin} style={s.form} noValidate>
-          <div style={s.group}>
-            <label style={s.label}>이메일</label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="example@email.com"
-              style={s.input}
-              required
-              autoComplete="email"
-            />
+          {callbackError && (
+            <p style={{ ...s.error, marginBottom: 16 }} role="alert">
+              {callbackError}
+            </p>
+          )}
+
+          <form onSubmit={handleLogin} style={s.form} noValidate>
+            <div style={s.group}>
+              <label htmlFor="login-email" style={s.label}>이메일</label>
+              <input
+                id="login-email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="example@email.com"
+                style={s.input}
+                className="login-input"
+                required
+                autoComplete="email"
+              />
+            </div>
+            <div style={s.group}>
+              <label htmlFor="login-password" style={s.label}>비밀번호</label>
+              <input
+                id="login-password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="비밀번호 입력"
+                style={s.input}
+                className="login-input"
+                required
+                autoComplete="current-password"
+              />
+            </div>
+
+            {error && <p style={s.error} role="alert">{error}</p>}
+
+            <button
+              type="submit"
+              style={{ ...s.btnPrimary, opacity: loading ? 0.65 : 1 }}
+              disabled={loading}
+            >
+              {loading ? '로그인 중...' : '로그인'}
+            </button>
+          </form>
+
+          <div style={s.divider}>
+            <span style={s.dividerLine} />
+            <span style={s.dividerText}>또는 소셜 계정으로 로그인</span>
+            <span style={s.dividerLine} />
           </div>
-          <div style={s.group}>
-            <label style={s.label}>비밀번호</label>
-            <input
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              placeholder="비밀번호 입력"
-              style={s.input}
-              required
-              autoComplete="current-password"
-            />
+
+          <div style={s.social}>
+            <button type="button" onClick={handleGoogle} style={s.btnGoogle}>
+              <GoogleIcon />
+              구글로 로그인
+            </button>
+            <button type="button" onClick={handleKakao} style={s.btnKakao}>
+              <KakaoIcon />
+              카카오로 로그인
+            </button>
+            <button type="button" onClick={handleNaver} style={s.btnNaver}>
+              <NaverIcon />
+              네이버로 로그인
+            </button>
           </div>
 
-          {error && <p style={s.error}>{error}</p>}
-
-          <button type="submit" style={s.btnPrimary} disabled={loading}>
-            {loading ? '로그인 중...' : '로그인'}
-          </button>
-        </form>
-
-        <div style={s.divider}>
-          <span style={s.dividerLine} />
-          <span style={s.dividerText}>또는 소셜 계정으로 로그인</span>
-          <span style={s.dividerLine} />
+          <p style={s.footer}>
+            아직 회원이 아니신가요?{' '}
+            <Link href="/register" style={s.link}>회원가입</Link>
+          </p>
         </div>
-
-        <div style={s.social}>
-          <button type="button" onClick={handleGoogle} style={s.btnGoogle}>
-            <GoogleIcon />
-            구글로 로그인
-          </button>
-          <button type="button" onClick={handleKakao} style={s.btnKakao}>
-            <KakaoIcon />
-            카카오로 로그인
-          </button>
-          <button type="button" onClick={handleNaver} style={s.btnNaver}>
-            <NaverIcon />
-            네이버로 로그인
-          </button>
-        </div>
-
-        <p style={s.footer}>
-          아직 회원이 아니신가요?{' '}
-          <Link href="/register" style={s.link}>회원가입</Link>
-        </p>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -193,14 +240,14 @@ const s: Record<string, React.CSSProperties> = {
   },
   form: { display: 'flex', flexDirection: 'column', gap: 16 },
   group: { display: 'flex', flexDirection: 'column', gap: 6 },
-  label: { fontSize: 13, fontWeight: 600, color: '#555' },
+  label: { fontSize: 13, fontWeight: 600, color: '#555', cursor: 'pointer' },
   input: {
     padding: '12px 14px',
     border: '1.5px solid #e0e0e0',
     borderRadius: 8,
     fontSize: 14,
     outline: 'none',
-    transition: 'border-color 0.2s',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
   },
   error: {
     fontSize: 13,
@@ -221,6 +268,7 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: 'pointer',
     marginTop: 4,
+    transition: 'opacity 0.2s',
   },
   divider: {
     display: 'flex',

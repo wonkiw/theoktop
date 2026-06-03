@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import Head from 'next/head'
 import Link from 'next/link'
 import { supabase } from '../lib/supabase'
 
@@ -73,112 +74,146 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div style={s.page}>
-        <div style={s.card}>
-          <h1 style={s.logo}>THE OKTOP</h1>
-          <div style={s.successBox}>
-            <div style={s.successIcon}>✓</div>
-            <h2 style={s.successTitle}>회원가입이 완료됐습니다!</h2>
-            <p style={s.successDesc}>
-              지금 바로 로그인하실 수 있습니다.
-            </p>
-            <Link href="/login" style={s.btnPrimaryLink}>로그인하러 가기</Link>
+      <>
+        <Head><title>회원가입 완료 | THE OKTOP</title></Head>
+        <div style={s.page}>
+          <div style={s.card}>
+            <h1 style={s.logo}>THE OKTOP</h1>
+            <div style={s.successBox}>
+              <div style={s.successIcon}>✓</div>
+              <h2 style={s.successTitle}>회원가입이 완료됐습니다!</h2>
+              <p style={s.successDesc}>지금 바로 로그인하실 수 있습니다.</p>
+              <Link href="/login" style={s.btnPrimaryLink}>로그인하러 가기</Link>
+            </div>
           </div>
         </div>
-      </div>
+      </>
     )
   }
 
   return (
-    <div style={s.page}>
-      <div style={s.card}>
-        <h1 style={s.logo}>THE OKTOP</h1>
-        <h2 style={s.title}>회원가입</h2>
+    <>
+      <Head><title>회원가입 | THE OKTOP</title></Head>
+      <style>{`
+        .reg-input:focus {
+          border-color: #111 !important;
+          box-shadow: 0 0 0 3px rgba(0,0,0,0.08);
+        }
+        @media (max-width: 480px) {
+          .reg-card { padding: 36px 24px !important; }
+        }
+      `}</style>
 
-        <form onSubmit={handleRegister} style={s.form} noValidate>
-          <div style={s.group}>
-            <label style={s.label}>이름 <span style={s.required}>*</span></label>
-            <input
-              type="text"
-              value={form.name}
-              onChange={set('name')}
-              placeholder="홍길동"
-              style={s.input}
-              required
-              autoComplete="name"
-            />
-          </div>
-          <div style={s.group}>
-            <label style={s.label}>이메일 <span style={s.required}>*</span></label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={set('email')}
-              placeholder="example@email.com"
-              style={s.input}
-              required
-              autoComplete="email"
-            />
-          </div>
-          <div style={s.group}>
-            <label style={s.label}>비밀번호 <span style={s.required}>*</span></label>
-            <input
-              type="password"
-              value={form.password}
-              onChange={set('password')}
-              placeholder="8자 이상 입력"
-              style={s.input}
-              required
-              autoComplete="new-password"
-            />
-          </div>
-          <div style={s.group}>
-            <label style={s.label}>비밀번호 확인 <span style={s.required}>*</span></label>
-            <input
-              type="password"
-              value={form.passwordConfirm}
-              onChange={set('passwordConfirm')}
-              placeholder="비밀번호를 다시 입력"
-              style={s.input}
-              required
-              autoComplete="new-password"
-            />
+      <div style={s.page}>
+        <div style={s.card} className="reg-card">
+          <h1 style={s.logo}>THE OKTOP</h1>
+          <h2 style={s.title}>회원가입</h2>
+
+          <form onSubmit={handleRegister} style={s.form} noValidate>
+            <div style={s.group}>
+              <label htmlFor="reg-name" style={s.label}>
+                이름 <span style={s.required}>*</span>
+              </label>
+              <input
+                id="reg-name"
+                type="text"
+                value={form.name}
+                onChange={set('name')}
+                placeholder="홍길동"
+                style={s.input}
+                className="reg-input"
+                required
+                autoComplete="name"
+              />
+            </div>
+            <div style={s.group}>
+              <label htmlFor="reg-email" style={s.label}>
+                이메일 <span style={s.required}>*</span>
+              </label>
+              <input
+                id="reg-email"
+                type="email"
+                value={form.email}
+                onChange={set('email')}
+                placeholder="example@email.com"
+                style={s.input}
+                className="reg-input"
+                required
+                autoComplete="email"
+              />
+            </div>
+            <div style={s.group}>
+              <label htmlFor="reg-password" style={s.label}>
+                비밀번호 <span style={s.required}>*</span>
+              </label>
+              <input
+                id="reg-password"
+                type="password"
+                value={form.password}
+                onChange={set('password')}
+                placeholder="8자 이상 입력"
+                style={s.input}
+                className="reg-input"
+                required
+                autoComplete="new-password"
+              />
+            </div>
+            <div style={s.group}>
+              <label htmlFor="reg-password-confirm" style={s.label}>
+                비밀번호 확인 <span style={s.required}>*</span>
+              </label>
+              <input
+                id="reg-password-confirm"
+                type="password"
+                value={form.passwordConfirm}
+                onChange={set('passwordConfirm')}
+                placeholder="비밀번호를 다시 입력"
+                style={s.input}
+                className="reg-input"
+                required
+                autoComplete="new-password"
+              />
+            </div>
+
+            {error && <p style={s.error} role="alert">{error}</p>}
+
+            <button
+              type="submit"
+              style={{ ...s.btnPrimary, opacity: loading ? 0.65 : 1 }}
+              disabled={loading}
+            >
+              {loading ? '가입 처리 중...' : '가입 완료'}
+            </button>
+          </form>
+
+          <div style={s.divider}>
+            <span style={s.dividerLine} />
+            <span style={s.dividerText}>또는 소셜 계정으로 가입</span>
+            <span style={s.dividerLine} />
           </div>
 
-          {error && <p style={s.error}>{error}</p>}
+          <div style={s.social}>
+            <button type="button" onClick={handleGoogle} style={s.btnGoogle}>
+              <GoogleIcon />
+              구글로 가입
+            </button>
+            <button type="button" onClick={handleKakao} style={s.btnKakao}>
+              <KakaoIcon />
+              카카오로 가입
+            </button>
+            <button type="button" onClick={handleNaver} style={s.btnNaver}>
+              <NaverIcon />
+              네이버로 가입
+            </button>
+          </div>
 
-          <button type="submit" style={s.btnPrimary} disabled={loading}>
-            {loading ? '가입 처리 중...' : '가입 완료'}
-          </button>
-        </form>
-
-        <div style={s.divider}>
-          <span style={s.dividerLine} />
-          <span style={s.dividerText}>또는 소셜 계정으로 가입</span>
-          <span style={s.dividerLine} />
+          <p style={s.footer}>
+            이미 회원이신가요?{' '}
+            <Link href="/login" style={s.link}>로그인</Link>
+          </p>
         </div>
-
-        <div style={s.social}>
-          <button type="button" onClick={handleGoogle} style={s.btnGoogle}>
-            <GoogleIcon />
-            구글로 가입
-          </button>
-          <button type="button" onClick={handleKakao} style={s.btnKakao}>
-            <KakaoIcon />
-            카카오로 가입
-          </button>
-          <button type="button" onClick={handleNaver} style={s.btnNaver}>
-            <NaverIcon />
-            네이버로 가입
-          </button>
-        </div>
-
-        <p style={s.footer}>
-          이미 회원이신가요?{' '}
-          <Link href="/login" style={s.link}>로그인</Link>
-        </p>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -246,7 +281,7 @@ const s: Record<string, React.CSSProperties> = {
   },
   form: { display: 'flex', flexDirection: 'column', gap: 16 },
   group: { display: 'flex', flexDirection: 'column', gap: 6 },
-  label: { fontSize: 13, fontWeight: 600, color: '#555' },
+  label: { fontSize: 13, fontWeight: 600, color: '#555', cursor: 'pointer' },
   required: { color: '#E53935' },
   input: {
     padding: '12px 14px',
@@ -254,6 +289,7 @@ const s: Record<string, React.CSSProperties> = {
     borderRadius: 8,
     fontSize: 14,
     outline: 'none',
+    transition: 'border-color 0.2s, box-shadow 0.2s',
   },
   error: {
     fontSize: 13,
@@ -274,6 +310,7 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: 'pointer',
     marginTop: 4,
+    transition: 'opacity 0.2s',
   },
   btnPrimaryLink: {
     display: 'block',

@@ -1,9 +1,49 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/auth-helpers-nextjs'
 import { pool } from '../../../lib/db'
 
+function buildSetCookieHeader(name: string, value: string, options: Record<string, unknown>): string {
+  let cookie = `${name}=${value}`
+  if (options?.path)    cookie += `; Path=${options.path}`
+  if (options?.maxAge !== undefined) cookie += `; Max-Age=${options.maxAge}`
+  if (options?.domain)  cookie += `; Domain=${options.domain}`
+  if (options?.secure)  cookie += '; Secure'
+  if (options?.httpOnly) cookie += '; HttpOnly'
+  if (options?.sameSite) cookie += `; SameSite=${options.sameSite}`
+  return cookie
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const supabase = createServerSupabaseClient({ req, res })
+  const cookieHeaders: string[] = []
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () =>
+          Object.entries(req.cookies ?? {}).map(([name, value]) => ({
+            name,
+            value: value ?? '',
+          })),
+        setAll: (cookiesToSet) => {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            cookieHeaders.push(buildSetCookieHeader(name, value, options as Record<string, unknown>))
+          })
+          res.setHeader('Set-Cookie', cookieHeaders)
+        },
+      },
+    }
+  )
+
+  // PKCE 코드 교환
+  const { code } = req.query
+  if (typeof code === 'string') {
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    if (error) {
+      return res.redirect('/login?error=auth_failed')
+    }
+  }
 
   const { data: { session }, error } = await supabase.auth.getSession()
 

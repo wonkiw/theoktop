@@ -1,15 +1,28 @@
-import { createMiddlewareSupabaseClient } from '@supabase/auth-helpers-nextjs'
+import { createServerClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
-  const supabase = createMiddlewareSupabaseClient({ req, res })
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll: () => req.cookies.getAll(),
+        setAll: (cookiesToSet) => {
+          cookiesToSet.forEach(({ name, value, options }) => {
+            res.cookies.set(name, value, options)
+          })
+        },
+      },
+    }
+  )
 
   const { data: { session } } = await supabase.auth.getSession()
   const { pathname } = req.nextUrl
 
-  // 비로그인 → /login?redirect=원래경로
   if (!session) {
     const loginUrl = req.nextUrl.clone()
     loginUrl.pathname = '/login'
@@ -17,7 +30,6 @@ export async function middleware(req: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // /admin → role이 admin 또는 superadmin 아니면 /403
   if (pathname.startsWith('/admin')) {
     const role = session.user.app_metadata?.role as string | undefined
     if (role !== 'admin' && role !== 'superadmin') {
