@@ -13,14 +13,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, message: 'email, password, name은 필수입니다.' })
   }
 
+  const AUTH_ERROR_MAP: Record<string, string> = {
+    'User already registered': '이미 사용 중인 이메일입니다.',
+    'Email address is already used': '이미 사용 중인 이메일입니다.',
+    'Invalid email': '유효하지 않은 이메일 형식입니다.',
+    'Password should be at least 6 characters': '비밀번호는 6자 이상이어야 합니다.',
+    'Unable to validate email address: invalid format': '유효하지 않은 이메일 형식입니다.',
+  }
+
   const { data, error } = await supabaseAdmin.auth.admin.createUser({
     email,
     password,
     email_confirm: true,
+    user_metadata: { full_name: name },
   })
 
   if (error || !data.user) {
-    return res.status(400).json({ success: false, message: error?.message ?? '회원가입에 실패했습니다.' })
+    const msg = error?.message ?? ''
+    const localMsg = AUTH_ERROR_MAP[msg] ?? '회원가입에 실패했습니다.'
+    return res.status(400).json({ success: false, message: localMsg })
   }
 
   const supabaseUid = data.user.id

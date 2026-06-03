@@ -1,4 +1,0 @@
-엔드포인트
-
-theoktop-db.cluster-cngm6kk6grax.ap-northeast-2.rds.amazonaws.com
-theoktop-db.cluster-ro-cngm6kk6grax.ap-northeast-2.rds.amazonaws.com

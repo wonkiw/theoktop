@@ -15,6 +15,14 @@ export default function RegisterPage() {
     e.preventDefault()
     setError('')
 
+    if (!form.name.trim()) {
+      setError('이름을 입력해주세요.')
+      return
+    }
+    if (!form.email.trim()) {
+      setError('이메일을 입력해주세요.')
+      return
+    }
     if (form.password !== form.passwordConfirm) {
       setError('비밀번호가 일치하지 않습니다.')
       return
@@ -72,9 +80,7 @@ export default function RegisterPage() {
             <div style={s.successIcon}>✓</div>
             <h2 style={s.successTitle}>회원가입이 완료됐습니다!</h2>
             <p style={s.successDesc}>
-              이메일 인증 링크를 발송했습니다.
-              <br />
-              메일함을 확인 후 인증을 완료해주세요.
+              지금 바로 로그인하실 수 있습니다.
             </p>
             <Link href="/login" style={s.btnPrimaryLink}>로그인하러 가기</Link>
           </div>
