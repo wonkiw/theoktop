@@ -273,6 +273,22 @@ input, select, textarea { outline: none; }
   box-shadow: 0 4px 16px var(--glow);
 }
 
+/* Nav auth buttons (login / consult / register) */
+.nav-auth-guest,
+.nav-auth-logged {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-nav-auth {
+  padding: 5px 12px;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border: none;
+}
+
 /* Hamburger */
 .hamburger {
   display: none;
@@ -2509,6 +2525,28 @@ input, select, textarea { outline: none; }
 
 .footer-nav a:hover { color: var(--gold-primary); }
 
+/* PC 화면 전환 버튼 (푸터, SNS 위) */
+.btn-pc-view {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 13px;
+  font-size: 0.69rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  cursor: pointer;
+  transition: color var(--t), border-color var(--t), background var(--t);
+  white-space: nowrap;
+}
+.btn-pc-view:hover {
+  color: var(--gold-primary);
+  border-color: var(--gold-primary);
+  background: var(--glow);
+}
+
 /* SNS icons */
 .footer-sns {
   display: flex;
@@ -2623,4 +2661,124 @@ input, select, textarea { outline: none; }
 /* Mobile: USP grid tighter on very small screens */
 @media (max-width: 400px) {
   [data-layout="mobile"] .usp-grid { grid-template-columns: 1fr; }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — @media (max-width: 768px)
+   뷰포트 768px 이하에서는 data-layout 값과 무관하게
+   항상 모바일 레이아웃을 강제 적용합니다.
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (max-width: 768px) {
+
+  /* ── Container & nav ─────────────────────────────────────── */
+  .container    { padding: 0 20px; }
+  .nav-container { padding: 0 20px; }
+  .nav-links    { display: none !important; }
+  .hamburger    { display: flex !important; }
+  .nav-cta      { display: none !important; }
+  .nav-auth-guest,
+  .nav-auth-logged { display: none !important; }
+
+  /* ── Typography — px → rem (반응형 기준) ─────────────────── */
+  body          { font-size: 0.9375rem; }   /* 15px */
+  .footer-logo  { font-size: 1.125rem; }   /* 18px */
+  .footer-tagline { font-size: 0.75rem; }  /* 12px */
+  .footer-info p  { font-size: 0.7rem; }   /* ~11px */
+  .footer-nav a   { font-size: 0.75rem; }  /* 12px */
+  .footer-copy    { font-size: 0.7rem; }   /* ~11px */
+  .footer-legal a { font-size: 0.7rem; }
+
+  /* ── Hero ────────────────────────────────────────────────── */
+  .hero-title       { font-size: clamp(2.25rem, 9vw, 3.5rem); }
+  .hero-desc br     { display: none; }
+  .hero-content     { padding-inline: 20px; }
+
+  /* ── Service grid ────────────────────────────────────────── */
+  .svc-grid   { grid-template-columns: 1fr; }
+
+  /* ── Cards grid ──────────────────────────────────────────── */
+  .cards-grid { grid-template-columns: 1fr; }
+
+  /* ── USP ─────────────────────────────────────────────────── */
+  .usp-section { padding: 40px 24px; }
+  .usp-grid    { grid-template-columns: repeat(2, 1fr); }
+
+  /* ── Process timeline ────────────────────────────────────── */
+  .process-timeline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
+  }
+  .process-step {
+    flex-direction: row;
+    align-items: flex-start;
+    text-align: left;
+    min-width: unset;
+    max-width: unset;
+    width: 100%;
+    gap: 16px;
+    padding: 0 0 0 8px;
+  }
+  .step-body         { margin-top: 10px; padding: 0; flex: 1; }
+  .step-arrow-connector {
+    flex: none;
+    width: 2px;
+    height: 28px;
+    margin: 4px 0 4px 29px;
+    background: var(--border-strong);
+  }
+  .step-arrow-connector::after {
+    right: auto; left: -4px;
+    top: auto;   bottom: -1px;
+    border-width: 7px 5px 0 5px;
+    border-color: var(--border-strong) transparent transparent transparent;
+  }
+
+  /* ── Projects grid ───────────────────────────────────────── */
+  .projects-grid { grid-template-columns: 1fr; }
+
+  /* ── Modal ───────────────────────────────────────────────── */
+  .modal-body    { padding: 20px 20px 28px; }
+  .modal-gallery { grid-template-columns: repeat(3, 1fr); }
+
+  /* ── Map layout ──────────────────────────────────────────── */
+  .map-layout           { grid-template-columns: 1fr; }
+  .naver-map-container  { height: 280px; }
+  #mapResult            { position: static !important; margin-top: 12px; }
+
+  /* ── Auth pane ───────────────────────────────────────────── */
+  .auth-pane { padding: 24px 22px 28px; }
+
+  /* ── Consultation form ───────────────────────────────────── */
+  .consultation-wrapper { grid-template-columns: 1fr; }
+  .form-row             { grid-template-columns: 1fr; }
+
+  /* ── Footer ──────────────────────────────────────────────── */
+  .footer-top   { flex-direction: column; gap: 28px; }
+  .footer-right { align-items: flex-start; }
+  .footer-inner { flex-direction: column; align-items: flex-start; }
+  .footer-nav   { gap: 16px; }
+  .footer-bottom { flex-direction: column; gap: 8px; }
+
+  /* ── Section spacing ─────────────────────────────────────── */
+  .section        { padding: 80px 0; }
+  .section-header { margin-bottom: 52px; }
+
+  /* ── Scroll-to-top button ────────────────────────────────── */
+  .scroll-top { bottom: 20px; right: 16px; }
+
+  /* ── PC 화면 버튼: 모바일에서만 표시 ─────────────────────── */
+  .btn-pc-view { display: none; }
+}
+
+/* 400px 이하: USP 단일 열 */
+@media (max-width: 400px) {
+  .usp-grid { grid-template-columns: 1fr; }
+}
+
+/* 769px 초과(데스크탑): PC 화면 버튼 표시 */
+@media (min-width: 769px) {
+  .btn-pc-view { display: inline-flex; }
 }

@@ -1,17 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Header from '../../components/Header'
-
-declare global {
-  interface Window {
-    daum: {
-      Postcode: new (config: {
-        oncomplete: (data: { address: string; zonecode: string }) => void
-      }) => { open: () => void }
-    }
-  }
-}
+import AddressSearch, { AddressInfo } from '../../components/AddressSearch'
 
 const ORDER_TYPES = ['매매', '전세', '임대', '기타']
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png']
@@ -28,8 +19,7 @@ type FileState = {
 export default function NewOrderPage() {
   const router = useRouter()
 
-  const [address, setAddress]         = useState('')
-  const [addressDetail, setAddressDetail] = useState('')
+  const [addressInfo, setAddressInfo]  = useState<AddressInfo | null>(null)
   const [orderType, setOrderType]     = useState('')
   const [description, setDescription] = useState('')
   const [fileState, setFileState]     = useState<FileState | null>(null)
@@ -37,29 +27,6 @@ export default function NewOrderPage() {
   const [submitting, setSubmitting]   = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  // 카카오 주소 API 스크립트 로드
-  useEffect(() => {
-    if (document.getElementById('kakao-postcode-script')) return
-    const script = document.createElement('script')
-    script.id = 'kakao-postcode-script'
-    script.src = 'https://t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js'
-    script.async = true
-    document.head.appendChild(script)
-  }, [])
-
-  const openAddressSearch = () => {
-    if (!window.daum?.Postcode) {
-      alert('주소 검색 서비스를 불러오는 중입니다. 잠시 후 다시 시도해주세요.')
-      return
-    }
-    new window.daum.Postcode({
-      oncomplete: (data) => {
-        setAddress(data.address)
-        setAddressDetail('')
-      },
-    }).open()
-  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -111,8 +78,8 @@ export default function NewOrderPage() {
     e.preventDefault()
     setSubmitError('')
 
-    if (!address.trim()) {
-      setSubmitError('건물 주소를 입력해주세요.')
+    if (!addressInfo?.roadAddress && !addressInfo?.jibunAddress) {
+      setSubmitError('건물 주소를 검색하여 선택해주세요.')
       return
     }
     if (!orderType) {
@@ -136,8 +103,14 @@ export default function NewOrderPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          building_address: address.trim(),
-          building_detail: addressDetail.trim() || null,
+          building_address: (addressInfo?.roadAddress || addressInfo?.jibunAddress || '').trim(),
+          building_detail:  addressInfo?.detail?.trim() || null,
+          road_address:     addressInfo?.roadAddress  || null,
+          jibun_address:    addressInfo?.jibunAddress || null,
+          building_name:    addressInfo?.buildingName || null,
+          zip_code:         addressInfo?.zipCode      || null,
+          lat:              addressInfo?.lat          ?? null,
+          lng:              addressInfo?.lng          ?? null,
           order_type: orderType,
           description: description.trim() || null,
         }),
@@ -188,26 +161,7 @@ export default function NewOrderPage() {
           {/* 건물 주소 */}
           <div style={s.section}>
             <h3 style={s.sectionTitle}>건물 주소</h3>
-            <div style={s.addressRow}>
-              <input
-                type="text"
-                value={address}
-                onChange={e => setAddress(e.target.value)}
-                placeholder="주소 검색 버튼을 눌러주세요"
-                style={{ ...s.input, flex: 1 }}
-                readOnly
-              />
-              <button type="button" onClick={openAddressSearch} style={s.addressBtn}>
-                주소 검색
-              </button>
-            </div>
-            <input
-              type="text"
-              value={addressDetail}
-              onChange={e => setAddressDetail(e.target.value)}
-              placeholder="상세 주소 (예: 3층 옥탑)"
-              style={s.input}
-            />
+            <AddressSearch onAddressSelect={setAddressInfo} />
           </div>
 
           {/* 의뢰 유형 */}

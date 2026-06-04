@@ -16,7 +16,7 @@
   ╚══════════════════════════════════════════════════════════════╝
 -->
 <!DOCTYPE html>
-<html lang="ko" data-theme="dark" data-layout="pc">
+<html lang="ko" data-theme="dark" data-layout="mobile">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -92,15 +92,12 @@
         <button class="btn-icon" id="themeToggle" title="테마 전환" aria-label="테마 전환">
           <span class="theme-icon">☀️</span>
         </button>
-        <button class="btn-icon" id="layoutToggle" title="레이아웃 전환" aria-label="레이아웃 전환">
-          <span class="layout-icon">📱</span>
-        </button>
 
         <!-- 비로그인 상태 -->
         <div class="nav-auth-guest" id="navAuthGuest" style="display:none">
-          <a href="/login"        class="btn-nav-auth btn-cta">로그인</a>
+          <button class="btn-nav-auth btn-cta" id="navLoginBtn">로그인</button>
           <a href="#consultation" class="btn-nav-auth btn-cta">상담신청</a>
-          <a href="/register"     class="btn-nav-auth btn-cta">회원가입</a>
+          <button class="btn-nav-auth btn-cta" id="navRegisterBtn">회원가입</button>
         </div>
 
         <!-- 로그인 상태 -->
@@ -142,9 +139,9 @@
 
     <!-- 모바일 인증 영역 -->
     <div class="drawer-auth-guest" id="drawerAuthGuest" style="display:none">
-      <a href="/login"        class="btn-cta drawer-auth-btn">로그인</a>
-      <a href="#consultation" class="btn-cta drawer-auth-btn">상담신청</a>
-      <a href="/register"     class="btn-cta drawer-auth-btn">회원가입</a>
+      <button class="btn-cta drawer-auth-btn" id="drawerLoginBtn">로그인</button>
+      <a href="#consultation" class="btn-cta drawer-auth-btn" id="drawerConsultBtn">상담신청</a>
+      <button class="btn-cta drawer-auth-btn" id="drawerRegisterBtn">회원가입</button>
     </div>
     <div class="drawer-auth-logged" id="drawerAuthLogged" style="display:none">
       <p class="drawer-username" id="drawerUserName"></p>
@@ -1119,6 +1116,8 @@
             <a href="#consultation">상담신청</a>
           </nav>
 
+          <button class="btn-pc-view" id="pcViewBtn" aria-label="PC 화면으로 전환">PC 화면</button>
+
           <div class="footer-sns" aria-label="SNS 바로가기">
             <!-- 인스타그램 -->
             <a href="#" class="sns-btn" aria-label="인스타그램" target="_blank" rel="noopener">
@@ -1167,8 +1166,8 @@
   -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
-    window.SUPABASE_URL      = 'YOUR_SUPABASE_URL';
-    window.SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    window.SUPABASE_URL      = 'https://zujtfawjkaquigomclfe.supabase.co';
+    window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1anRmYXdqa2FxdWlnb21jbGZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0ODExNjcsImV4cCI6MjA5NjA1NzE2N30.46CAVTi3of8pCMJNlUyqBKzS7FTmMcrp0-3ar1dwFOw';
   </script>
   <script src="/main.js"></script>
 </body>

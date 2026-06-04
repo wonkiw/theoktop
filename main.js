@@ -49,45 +49,54 @@
 
   /* ─────────────────────────────────────────────────────────────
      LAYOUT SYSTEM
-     PC / mobile — auto-detected on first visit (UA + viewport),
-     overridable by user via toggle button.
+     기본값 모바일. 768px 이하에서는 항상 모바일로 강제.
+     데스크탑(>768px)에서만 'PC 화면' 버튼으로 수동 전환 가능.
   ───────────────────────────────────────────────────────────── */
 
   const LS_LAYOUT        = 'oktop-layout';
   const LS_LAYOUT_MANUAL = 'oktop-layout-manual';
 
-  function applyLayout(layout) {
-    html.setAttribute('data-layout', layout);
-    localStorage.setItem(LS_LAYOUT, layout);
-    const icon = document.querySelector('.layout-icon');
-    if (icon) icon.textContent = layout === 'mobile' ? '💻' : '📱';
+  function isMobileViewport() {
+    return window.innerWidth <= 768
+      || /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
   }
 
-  function detectLayout() {
-    const isMobileUA = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isNarrow   = window.innerWidth < 768;
-    return isMobileUA || isNarrow ? 'mobile' : 'pc';
+  function applyLayout(layout) {
+    /* 768px 이하에서는 PC 레이아웃 불가 */
+    if (isMobileViewport()) layout = 'mobile';
+    html.setAttribute('data-layout', layout);
+    localStorage.setItem(LS_LAYOUT, layout);
+    /* 푸터 버튼 텍스트 동기화 */
+    const btn = document.getElementById('pcViewBtn');
+    if (btn) btn.textContent = layout === 'pc' ? '모바일 화면' : 'PC 화면';
   }
 
   (function initLayout() {
-    const saved  = localStorage.getItem(LS_LAYOUT);
-    const manual = localStorage.getItem(LS_LAYOUT_MANUAL);
-    applyLayout(saved && manual ? saved : detectLayout());
+    if (isMobileViewport()) {
+      applyLayout('mobile');
+    } else {
+      const saved  = localStorage.getItem(LS_LAYOUT);
+      const manual = localStorage.getItem(LS_LAYOUT_MANUAL);
+      applyLayout(saved && manual ? saved : 'mobile');
+    }
   })();
 
-  document.getElementById('layoutToggle')?.addEventListener('click', function () {
+  /* 푸터 'PC 화면' 버튼 */
+  document.getElementById('pcViewBtn')?.addEventListener('click', function () {
     const next = html.getAttribute('data-layout') === 'pc' ? 'mobile' : 'pc';
     localStorage.setItem(LS_LAYOUT_MANUAL, '1');
     applyLayout(next);
   });
 
-  /* Re-detect on resize only when the user has NOT manually overridden */
+  /* 리사이즈: 모바일 뷰포트에서는 항상 mobile로 강제 */
   let resizeTimer;
   window.addEventListener('resize', function () {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () {
-      if (!localStorage.getItem(LS_LAYOUT_MANUAL)) {
-        applyLayout(detectLayout());
+      if (isMobileViewport()) {
+        applyLayout('mobile');
+      } else if (!localStorage.getItem(LS_LAYOUT_MANUAL)) {
+        applyLayout('mobile');
       }
     }, 150);
   });
@@ -626,6 +635,12 @@
 
   var supabaseClient = null;
 
+  /* 로컬 사용자 스토리지 (Supabase 미설정 시 폴백) */
+  var LS_LOCAL_USER = 'oktop-local-user';
+  function setUser(u)     { try { localStorage.setItem(LS_LOCAL_USER, JSON.stringify(u)); } catch {} }
+  function clearUser()    { localStorage.removeItem(LS_LOCAL_USER); }
+  function getLocalUser() { try { return JSON.parse(localStorage.getItem(LS_LOCAL_USER)); } catch { return null; } }
+
   (function initSupabase() {
     if (!window.supabase || !window.SUPABASE_URL || window.SUPABASE_URL === 'YOUR_SUPABASE_URL') return;
     supabaseClient = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
@@ -648,6 +663,11 @@
   }
 
   function applyAuthState(user) {
+    /* 인자가 없으면(로컬 가입/로그아웃 후) localStorage 폴백 */
+    if (user === undefined) {
+      var local = getLocalUser();
+      user = local ? { user_metadata: { full_name: local.name }, email: local.email } : null;
+    }
     var name = user ? getDisplayName(user) : null;
 
     /* 상담 패널 (페이지 내 상담 섹션) */
@@ -709,6 +729,37 @@
       document.getElementById('paneSocial').hidden = target !== 'social';
     });
   });
+
+  /* Nav 로그인 / 회원가입 버튼 — consultation 섹션으로 스크롤 + 탭 전환 */
+  function scrollToAuthTab(tabName) {
+    var consultSection = document.getElementById('consultation');
+    if (consultSection) consultSection.scrollIntoView({ behavior: 'smooth' });
+    document.querySelectorAll('.auth-tab').forEach(function (t) {
+      var isTarget = t.getAttribute('data-tab') === tabName;
+      t.classList.toggle('active', isTarget);
+      t.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+    });
+    var paneSignup = document.getElementById('paneSignup');
+    var paneSocial = document.getElementById('paneSocial');
+    if (paneSignup) paneSignup.hidden = tabName !== 'signup';
+    if (paneSocial) paneSocial.hidden = tabName !== 'social';
+  }
+
+  document.getElementById('navLoginBtn')?.addEventListener('click', function () {
+    scrollToAuthTab('social');
+  });
+  document.getElementById('navRegisterBtn')?.addEventListener('click', function () {
+    scrollToAuthTab('signup');
+  });
+  document.getElementById('drawerLoginBtn')?.addEventListener('click', function () {
+    closeDrawer();
+    setTimeout(function () { scrollToAuthTab('social'); }, 300);
+  });
+  document.getElementById('drawerRegisterBtn')?.addEventListener('click', function () {
+    closeDrawer();
+    setTimeout(function () { scrollToAuthTab('signup'); }, 300);
+  });
+  document.getElementById('drawerConsultBtn')?.addEventListener('click', closeDrawer);
 
   /* Logout */
   document.getElementById('logoutBtn')?.addEventListener('click', function () {
