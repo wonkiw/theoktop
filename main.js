@@ -706,7 +706,7 @@
 
       const target = tab.getAttribute('data-tab');
       document.getElementById('paneSignup').hidden = target !== 'signup';
-      document.getElementById('paneNaver').hidden  = target !== 'naver';
+      document.getElementById('paneSocial').hidden = target !== 'social';
     });
   });
 
@@ -832,6 +832,25 @@
   /* ─────────────────────────────────────────────────────────────
      NAVER OAUTH LOGIN
   ───────────────────────────────────────────────────────────── */
+
+  /* Google / Kakao 소셜 로그인 (Supabase OAuth) */
+  const SITE_URL = window.location.origin;
+
+  document.getElementById('googleLoginBtn')?.addEventListener('click', function () {
+    if (!supabaseClient) { showToast('Supabase가 설정되지 않았습니다.', 'error'); return; }
+    supabaseClient.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: SITE_URL + '/api/auth/callback' },
+    });
+  });
+
+  document.getElementById('kakaoLoginBtn')?.addEventListener('click', function () {
+    if (!supabaseClient) { showToast('Supabase가 설정되지 않았습니다.', 'error'); return; }
+    supabaseClient.auth.signInWithOAuth({
+      provider: 'kakao',
+      options: { redirectTo: SITE_URL + '/api/auth/callback' },
+    });
+  });
 
   // TODO: 네이버 클라우드 플랫폼에서 발급한 Client ID 입력
   const NAVER_CLIENT_ID   = 'YOUR_NAVER_CLIENT_ID';
