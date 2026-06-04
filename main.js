@@ -903,10 +903,8 @@
     });
   });
 
-  // TODO: 네이버 클라우드 플랫폼에서 발급한 Client ID 입력
-  const NAVER_CLIENT_ID   = 'YOUR_NAVER_CLIENT_ID';
-  // TODO: 네이버 개발자센터에 등록한 콜백 URI 입력
-  const NAVER_REDIRECT_URI = 'YOUR_REDIRECT_URI';
+  const NAVER_CLIENT_ID    = 'TZhEtpjM4v2iLGe6P4Zw';
+  const NAVER_REDIRECT_URI = 'https://theoktop.com/api/auth/naver-callback';
 
   document.getElementById('naverLoginBtn')?.addEventListener('click', function () {
     if (NAVER_CLIENT_ID === 'YOUR_NAVER_CLIENT_ID') {
