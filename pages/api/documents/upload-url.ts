@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs'
+import { createApiSupabaseClient } from '../../../lib/supabaseServer'
 import { getUploadPresignedUrl } from '../../../lib/s3'
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ success: false, message: '허용되지 않는 메서드입니다.' })
   }
 
-  const supabase = createServerSupabaseClient({ req, res })
+  const supabase = createApiSupabaseClient(req, res)
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
     return res.status(401).json({ success: false, message: '로그인이 필요합니다.' })

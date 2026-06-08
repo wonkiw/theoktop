@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs'
-import { supabaseAdmin } from '../../../lib/supabaseServer'
+import { supabaseAdmin, createApiSupabaseClient } from '../../../lib/supabaseServer'
 import { pool } from '../../../lib/db'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -100,7 +99,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.redirect('/login?error=session_failed')
   }
 
-  const supabase = createServerSupabaseClient({ req, res })
+  const supabase = createApiSupabaseClient(req, res)
   const { error: verifyError } = await supabase.auth.verifyOtp({
     token_hash: linkData.properties.hashed_token,
     type: 'magiclink',

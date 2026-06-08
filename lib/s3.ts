@@ -54,6 +54,17 @@ export async function getDownloadPresignedUrl(
 }
 
 /**
+ * 파일 뷰어용 presigned GET URL 발급 (Content-Disposition 없음 → 브라우저 인라인 열기)
+ */
+export async function getViewPresignedUrl(
+  key: string,
+  expiresIn = 300
+): Promise<string> {
+  const command = new GetObjectCommand({ Bucket: BUCKET, Key: key })
+  return getSignedUrl(s3, command, { expiresIn })
+}
+
+/**
  * S3 file_url에서 key 추출
  * https://bucket.s3.region.amazonaws.com/key → key
  */

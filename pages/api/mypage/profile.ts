@@ -1,9 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createServerSupabaseClient } from '@supabase/auth-helpers-nextjs'
+import { createApiSupabaseClient } from '../../../lib/supabaseServer'
 import { pool } from '../../../lib/db'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const supabase = createServerSupabaseClient({ req, res })
+  const supabase = createApiSupabaseClient(req, res)
   const { data: { session } } = await supabase.auth.getSession()
 
   if (!session) {
