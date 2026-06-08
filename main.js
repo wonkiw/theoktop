@@ -886,6 +886,17 @@
     } else {
       applyAuthState(data.user);
       showToast('로그인되었습니다. 상담 신청을 진행해주세요.', 'success');
+      // Next.js 미들웨어가 쿠키 기반 세션을 읽을 수 있도록 동기화
+      if (data.session) {
+        fetch('/api/auth/sync-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            access_token: data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          }),
+        }).catch(function () {});
+      }
     }
   });
 
@@ -936,6 +947,16 @@
       if (supabaseClient) {
         const { data: loginData } = await supabaseClient.auth.signInWithPassword({ email: email, password: pw });
         if (loginData?.user) applyAuthState(loginData.user);
+        if (loginData?.session) {
+          fetch('/api/auth/sync-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              access_token: loginData.session.access_token,
+              refresh_token: loginData.session.refresh_token,
+            }),
+          }).catch(function () {});
+        }
       }
 
       showToast('가입이 완료되었습니다! 상담 신청을 진행해주세요.', 'success');

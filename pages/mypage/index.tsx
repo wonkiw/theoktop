@@ -39,6 +39,10 @@ export default function MyPage() {
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
+      if (!data.user) {
+        router.replace('/login?redirect=/mypage')
+        return
+      }
       setUser(data.user)
       setLoading(false)
     })
