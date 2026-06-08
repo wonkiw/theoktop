@@ -769,102 +769,40 @@
       <div class="auth-panel" id="authPanel">
         <div class="auth-card">
 
-          <!-- 탭 -->
-          <div class="auth-tabs" role="tablist">
-            <button class="auth-tab active" role="tab" aria-selected="true"
-                    data-tab="signup" id="tabBtnSignup">직접 가입</button>
-            <button class="auth-tab" role="tab" aria-selected="false"
-                    data-tab="social" id="tabBtnSocial">다른 인증</button>
+          <p class="auth-gate-title">상담 신청을 위해 로그인이 필요합니다</p>
+          <p class="auth-gate-desc">기존 회원이시면 로그인, 처음이시면 회원가입 후 이용해주세요</p>
+
+          <div class="auth-gate-btns">
+            <a href="/login?redirect=%2Fmypage" class="btn-submit auth-gate-btn">로그인</a>
+            <a href="/register" class="btn-submit auth-gate-btn auth-gate-btn--outline">회원가입</a>
           </div>
 
-          <!-- 직접 가입 -->
-          <div class="auth-pane" id="paneSignup" role="tabpanel">
-            <form class="auth-form" id="signupForm" novalidate>
-
-              <div class="form-group">
-                <label for="signupName">이름 <span class="required">*</span></label>
-                <input type="text" id="signupName" name="signupName"
-                       placeholder="홍길동" required autocomplete="name">
-                <span class="field-error" id="errSignupName"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="signupEmail">이메일 <span class="required">*</span></label>
-                <input type="email" id="signupEmail" name="signupEmail"
-                       placeholder="example@email.com" required autocomplete="email">
-                <span class="field-error" id="errSignupEmail"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="signupPhone">휴대폰번호 <span class="required">*</span></label>
-                <div class="input-action-row">
-                  <input type="tel" id="signupPhone" name="signupPhone"
-                         placeholder="010-0000-0000" required autocomplete="tel">
-                  <button type="button" class="btn-inline" id="sendCodeBtn">인증번호 받기</button>
-                </div>
-                <span class="field-error" id="errSignupPhone"></span>
-              </div>
-
-              <div class="form-group" id="verifyGroup" hidden>
-                <label for="verifyCode">인증번호 <span class="required">*</span></label>
-                <div class="input-action-row">
-                  <div class="input-timer-wrap">
-                    <input type="text" id="verifyCode" name="verifyCode"
-                           placeholder="인증번호 6자리" maxlength="6" inputmode="numeric">
-                    <span class="verify-timer" id="verifyTimer">01:00</span>
-                  </div>
-                  <button type="button" class="btn-inline" id="confirmCodeBtn">확인</button>
-                </div>
-                <span class="field-error" id="errVerifyCode"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="signupPw">비밀번호 <span class="required">*</span></label>
-                <input type="password" id="signupPw" name="signupPw"
-                       placeholder="8자 이상 영문+숫자" required autocomplete="new-password">
-                <span class="field-error" id="errSignupPw"></span>
-              </div>
-
-              <div class="form-group">
-                <label for="signupPwConfirm">비밀번호 확인 <span class="required">*</span></label>
-                <input type="password" id="signupPwConfirm" name="signupPwConfirm"
-                       placeholder="비밀번호를 다시 입력" required autocomplete="new-password">
-                <span class="field-error" id="errSignupPwConfirm"></span>
-              </div>
-
-              <button type="submit" class="btn-submit" id="signupBtn">가입 완료</button>
-            </form>
-          </div>
-
-          <!-- 다른 인증 (소셜 로그인) -->
-          <div class="auth-pane" id="paneSocial" role="tabpanel" hidden>
-            <div class="social-login-wrap">
-              <p class="social-login-desc">소셜 계정으로 간편하게 로그인하세요</p>
-              <div class="social-btn-group">
-                <button type="button" class="btn-social btn-social-google" id="googleLoginBtn">
-                  <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-                    <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.5 30.2 0 24 0 14.7 0 6.8 5.4 3 13.3l7.8 6C12.9 13.2 18 9.5 24 9.5z"/>
-                    <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.5 2.8-2.1 5.2-4.5 6.8l7 5.4C43.5 36.9 46.5 31.1 46.5 24.5z"/>
-                    <path fill="#FBBC05" d="M10.8 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C1.1 16.6 0 20.2 0 24s1.1 7.4 3 10.7l7.8-6z"/>
-                    <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7-5.4c-2.1 1.4-4.8 2.3-8.2 2.3-6 0-11.1-3.7-13.2-9.2l-7.8 6C6.8 42.6 14.7 48 24 48z"/>
-                  </svg>
-                  구글로 로그인
-                </button>
-                <button type="button" class="btn-social btn-social-kakao" id="kakaoLoginBtn">
-                  <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fill="#3A1D1D" d="M12 2C6.48 2 2 5.92 2 10.76c0 3.04 1.84 5.71 4.6 7.28L5.5 22l5.04-2.66c.47.07.96.1 1.46.1 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/>
-                  </svg>
-                  카카오로 로그인
-                </button>
-                <button type="button" class="btn-social btn-social-naver" id="naverLoginBtn">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white" aria-hidden="true">
-                    <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
-                  </svg>
-                  네이버로 로그인
-                </button>
-              </div>
-              <p class="social-login-note">로그인 시 THE OKTOP 서비스 이용약관에 동의하게 됩니다</p>
+          <div class="social-login-wrap">
+            <p class="social-login-desc">소셜 계정으로 간편하게 로그인하세요</p>
+            <div class="social-btn-group">
+              <button type="button" class="btn-social btn-social-google" id="googleLoginBtn">
+                <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
+                  <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.7 2.5 30.2 0 24 0 14.7 0 6.8 5.4 3 13.3l7.8 6C12.9 13.2 18 9.5 24 9.5z"/>
+                  <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.5 2.8-2.1 5.2-4.5 6.8l7 5.4C43.5 36.9 46.5 31.1 46.5 24.5z"/>
+                  <path fill="#FBBC05" d="M10.8 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.8-6C1.1 16.6 0 20.2 0 24s1.1 7.4 3 10.7l7.8-6z"/>
+                  <path fill="#34A853" d="M24 48c6.2 0 11.4-2 15.2-5.5l-7-5.4c-2.1 1.4-4.8 2.3-8.2 2.3-6 0-11.1-3.7-13.2-9.2l-7.8 6C6.8 42.6 14.7 48 24 48z"/>
+                </svg>
+                구글로 로그인
+              </button>
+              <button type="button" class="btn-social btn-social-kakao" id="kakaoLoginBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="#3A1D1D" d="M12 2C6.48 2 2 5.92 2 10.76c0 3.04 1.84 5.71 4.6 7.28L5.5 22l5.04-2.66c.47.07.96.1 1.46.1 5.52 0 10-3.92 10-8.76S17.52 2 12 2z"/>
+                </svg>
+                카카오로 로그인
+              </button>
+              <button type="button" class="btn-social btn-social-naver" id="naverLoginBtn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white" aria-hidden="true">
+                  <path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/>
+                </svg>
+                네이버로 로그인
+              </button>
             </div>
+            <p class="social-login-note">로그인 시 THE OKTOP 서비스 이용약관에 동의하게 됩니다</p>
           </div>
 
         </div>

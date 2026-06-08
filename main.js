@@ -746,18 +746,18 @@
   }
 
   document.getElementById('navLoginBtn')?.addEventListener('click', function () {
-    scrollToAuthTab('social');
+    window.location.href = '/login';
   });
   document.getElementById('navRegisterBtn')?.addEventListener('click', function () {
-    scrollToAuthTab('signup');
+    window.location.href = '/register';
   });
   document.getElementById('drawerLoginBtn')?.addEventListener('click', function () {
     closeDrawer();
-    setTimeout(function () { scrollToAuthTab('social'); }, 300);
+    window.location.href = '/login';
   });
   document.getElementById('drawerRegisterBtn')?.addEventListener('click', function () {
     closeDrawer();
-    setTimeout(function () { scrollToAuthTab('signup'); }, 300);
+    window.location.href = '/register';
   });
   document.getElementById('drawerConsultBtn')?.addEventListener('click', closeDrawer);
 
