@@ -725,8 +725,10 @@
       tab.setAttribute('aria-selected', 'true');
 
       const target = tab.getAttribute('data-tab');
-      document.getElementById('paneSignup').hidden = target !== 'signup';
-      document.getElementById('paneSocial').hidden = target !== 'social';
+      var paneLogin  = document.getElementById('paneLogin');
+      var paneSignup = document.getElementById('paneSignup');
+      if (paneLogin)  paneLogin.hidden  = target !== 'login';
+      if (paneSignup) paneSignup.hidden = target !== 'signup';
     });
   });
 
@@ -739,25 +741,25 @@
       t.classList.toggle('active', isTarget);
       t.setAttribute('aria-selected', isTarget ? 'true' : 'false');
     });
+    var paneLogin  = document.getElementById('paneLogin');
     var paneSignup = document.getElementById('paneSignup');
-    var paneSocial = document.getElementById('paneSocial');
+    if (paneLogin)  paneLogin.hidden  = tabName !== 'login';
     if (paneSignup) paneSignup.hidden = tabName !== 'signup';
-    if (paneSocial) paneSocial.hidden = tabName !== 'social';
   }
 
   document.getElementById('navLoginBtn')?.addEventListener('click', function () {
-    window.location.href = '/login';
+    scrollToAuthTab('login');
   });
   document.getElementById('navRegisterBtn')?.addEventListener('click', function () {
-    window.location.href = '/register';
+    scrollToAuthTab('signup');
   });
   document.getElementById('drawerLoginBtn')?.addEventListener('click', function () {
     closeDrawer();
-    window.location.href = '/login';
+    setTimeout(function () { scrollToAuthTab('login'); }, 300);
   });
   document.getElementById('drawerRegisterBtn')?.addEventListener('click', function () {
     closeDrawer();
-    window.location.href = '/register';
+    setTimeout(function () { scrollToAuthTab('signup'); }, 300);
   });
   document.getElementById('drawerConsultBtn')?.addEventListener('click', closeDrawer);
 
@@ -846,7 +848,49 @@
   });
 
   /* Signup form submit */
-  document.getElementById('signupForm')?.addEventListener('submit', function (e) {
+  /* ── 로그인 폼 ─────────────────────────────────────────────── */
+  document.getElementById('loginForm')?.addEventListener('submit', async function (e) {
+    e.preventDefault();
+    clearFieldErrors();
+
+    const email = document.getElementById('loginEmail')?.value.trim();
+    const pw    = document.getElementById('loginPw')?.value;
+
+    let ok = true;
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      markInvalid('loginEmail', 'errLoginEmail', '올바른 이메일 주소를 입력해주세요.');
+      ok = false;
+    }
+    if (!pw) {
+      markInvalid('loginPw', 'errLoginPw', '비밀번호를 입력해주세요.');
+      ok = false;
+    }
+    if (!ok) return;
+
+    if (!supabaseClient) { showToast('인증 서비스를 이용할 수 없습니다.', 'error'); return; }
+
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) { loginBtn.classList.add('loading'); loginBtn.disabled = true; }
+
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email: email, password: pw });
+
+    if (loginBtn) { loginBtn.classList.remove('loading'); loginBtn.disabled = false; }
+
+    if (error) {
+      var errMsgMap = {
+        'Invalid login credentials': '이메일 또는 비밀번호가 올바르지 않습니다.',
+        'Email not confirmed':       '이메일 인증이 필요합니다.',
+        'Too many requests':         '잠시 후 다시 시도해주세요.',
+      };
+      showToast(errMsgMap[error.message] || '로그인에 실패했습니다.', 'error');
+    } else {
+      applyAuthState(data.user);
+      showToast('로그인되었습니다. 상담 신청을 진행해주세요.', 'success');
+    }
+  });
+
+  /* ── 회원가입 폼 ─────────────────────────────────────────────── */
+  document.getElementById('signupForm')?.addEventListener('submit', async function (e) {
     e.preventDefault();
     clearFieldErrors();
     let ok = true;
@@ -862,21 +906,44 @@
       markInvalid('signupEmail', 'errSignupEmail', '올바른 이메일 주소를 입력해주세요.'); ok = false;
     }
     if (!phone) { markInvalid('signupPhone', 'errSignupPhone', '휴대폰번호를 입력해주세요.'); ok = false; }
-    if (!phoneVerified) {
-      setFieldError('errSignupPhone', '휴대폰 인증을 완료해주세요.'); ok = false;
-    }
+    if (!phoneVerified) { setFieldError('errSignupPhone', '휴대폰 인증을 완료해주세요.'); ok = false; }
     if (!pw || pw.length < 8) {
       markInvalid('signupPw', 'errSignupPw', '비밀번호는 8자 이상 입력해주세요.'); ok = false;
     }
     if (pw !== pwc) {
       markInvalid('signupPwConfirm', 'errSignupPwConfirm', '비밀번호가 일치하지 않습니다.'); ok = false;
     }
-
     if (!ok) return;
 
-    setUser({ name: name, email: email, phone: phone });
-    applyAuthState();
-    showToast('가입이 완료되었습니다! 상담 신청을 진행해주세요.', 'success');
+    const signupBtn = document.getElementById('signupBtn');
+    if (signupBtn) { signupBtn.classList.add('loading'); signupBtn.disabled = true; }
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: pw, name: name }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showToast(data.message || '회원가입에 실패했습니다.', 'error');
+        if (signupBtn) { signupBtn.classList.remove('loading'); signupBtn.disabled = false; }
+        return;
+      }
+
+      /* 가입 후 자동 로그인 */
+      if (supabaseClient) {
+        const { data: loginData } = await supabaseClient.auth.signInWithPassword({ email: email, password: pw });
+        if (loginData?.user) applyAuthState(loginData.user);
+      }
+
+      showToast('가입이 완료되었습니다! 상담 신청을 진행해주세요.', 'success');
+    } catch {
+      showToast('네트워크 오류가 발생했습니다. 다시 시도해주세요.', 'error');
+    }
+
+    if (signupBtn) { signupBtn.classList.remove('loading'); signupBtn.disabled = false; }
   });
 
 
