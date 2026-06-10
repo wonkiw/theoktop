@@ -61,7 +61,8 @@ export default function LoginPage() {
             }),
           })
         }
-        router.push(getRedirectTarget())
+        // window.location 으로 전체 페이지 로드 → 미들웨어가 쿠키를 읽을 수 있음
+        window.location.href = getRedirectTarget()
       }
     } catch {
       setError('네트워크 오류가 발생했습니다. 다시 시도해주세요.')

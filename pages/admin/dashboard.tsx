@@ -91,6 +91,18 @@ export default function AdminDashboard() {
 
       const token = session.access_token
 
+      // 역할 확인 (미들웨어에서 DB 조회 제거로 인한 클라이언트 측 보완)
+      const roleRes = await fetch('/api/admin/auth/check-role', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const roleJson = await roleRes.json()
+      if (cancelled) return
+      if (!roleJson.success || (roleJson.role !== 'admin' && roleJson.role !== 'superadmin')) {
+        router.replace('/403')
+        return
+      }
+
       // 프로필 + 통계 병렬 조회
       const [profileRes, statsRes] = await Promise.all([
         fetch('/api/mypage/profile', { headers: { Authorization: `Bearer ${token}` } }),

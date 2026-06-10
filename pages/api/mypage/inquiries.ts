@@ -1,11 +1,21 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createApiSupabaseClient } from '../../../lib/supabaseServer'
+import { createApiSupabaseClient, supabaseAdmin } from '../../../lib/supabaseServer'
 import { pool } from '../../../lib/db'
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function getUid(req: NextApiRequest, res: NextApiResponse): Promise<string | null> {
+  const token = req.headers.authorization?.replace('Bearer ', '')
+  if (token) {
+    const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+    if (user) return user.id
+  }
   const supabase = createApiSupabaseClient(req, res)
   const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  return session?.user.id ?? null
+}
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const uid = await getUid(req, res)
+  if (!uid) {
     return res.status(401).json({ success: false, message: '로그인이 필요합니다.' })
   }
 
@@ -13,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const { rows: userRows } = await client.query(
       'SELECT id FROM users WHERE supabase_uid = $1',
-      [session.user.id]
+      [uid]
     )
     if (userRows.length === 0) {
       return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' })

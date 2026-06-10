@@ -24,10 +24,10 @@ export default function AdminLoginPage() {
       })
       const json = await res.json()
       if (json.role === 'admin' || json.role === 'superadmin') {
-        router.replace('/admin/dashboard')
+        window.location.href = '/admin/dashboard'
       }
     })
-  }, [router])
+  }, [])
 
   const [attempts, setAttempts]       = useState(0)
   const [lockedUntil, setLockedUntil] = useState<number | null>(null)
@@ -102,7 +102,8 @@ export default function AdminLoginPage() {
             refresh_token: data.session.refresh_token,
           }),
         })
-        router.replace('/admin/dashboard')
+        // window.location 으로 전체 페이지 로드 → 미들웨어가 쿠키를 읽을 수 있음
+        window.location.href = '/admin/dashboard'
       } else {
         await supabase.auth.signOut()
         setError('관리자 권한이 없습니다.')

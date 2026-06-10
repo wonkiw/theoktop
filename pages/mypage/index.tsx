@@ -54,21 +54,22 @@ export default function MyPage() {
   const [inquiries, setInquiries] = useState<Inquiry[]>([])
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
         router.replace('/login?redirect=/mypage')
         return
       }
-      setUser(data.user)
+      setUser(session.user)
       setLoading(false)
-      fetchRecent()
+      fetchRecent(session.access_token)
     })
   }, [])
 
-  const fetchRecent = async () => {
+  const fetchRecent = async (token: string) => {
+    const headers = { Authorization: `Bearer ${token}` }
     const [ordersRes, inquiriesRes] = await Promise.all([
-      fetch('/api/orders/list'),
-      fetch('/api/mypage/inquiries'),
+      fetch('/api/orders/list',      { headers }),
+      fetch('/api/mypage/inquiries', { headers }),
     ])
     if (ordersRes.ok) {
       const json = await ordersRes.json()

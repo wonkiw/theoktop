@@ -1,16 +1,26 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createApiSupabaseClient } from '../../../lib/supabaseServer'
+import { createApiSupabaseClient, supabaseAdmin } from '../../../lib/supabaseServer'
 import { pool } from '../../../lib/db'
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function getSupabaseUid(req: NextApiRequest, res: NextApiResponse): Promise<string | null> {
+  // Bearer 토큰 우선
+  const token = req.headers.authorization?.replace('Bearer ', '')
+  if (token) {
+    const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+    if (user) return user.id
+  }
+  // 쿠키 세션 fallback
   const supabase = createApiSupabaseClient(req, res)
   const { data: { session } } = await supabase.auth.getSession()
+  return session?.user.id ?? null
+}
 
-  if (!session) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  const supabaseUid = await getSupabaseUid(req, res)
+
+  if (!supabaseUid) {
     return res.status(401).json({ success: false, message: '로그인이 필요합니다.' })
   }
-
-  const supabaseUid = session.user.id
 
   if (req.method === 'GET') {
     const client = await pool.connect()

@@ -2,20 +2,6 @@ import { createServerClient } from '@supabase/auth-helpers-nextjs'
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
-async function fetchAdminRole(origin: string, token: string): Promise<string | null> {
-  try {
-    const res = await fetch(new URL('/api/admin/auth/check-role', origin), {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
-    })
-    if (!res.ok) return null
-    const json = await res.json()
-    return (json.role as string) ?? null
-  } catch {
-    return null
-  }
-}
-
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
   const { pathname, host } = req.nextUrl
@@ -46,36 +32,20 @@ export async function middleware(req: NextRequest) {
 
   // ── /admin/* 보호 ────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
-    // 관리자 로그인 페이지
     if (pathname === '/admin/login') {
-      // 이미 로그인된 관리자는 대시보드로 이동
+      // 이미 로그인한 경우 대시보드로 이동 (역할 확인은 클라이언트에서 처리)
       if (session) {
-        const role = await fetchAdminRole(req.nextUrl.origin, session.access_token)
-        if (role === 'admin' || role === 'superadmin') {
-          return NextResponse.redirect(new URL('/admin/dashboard', req.url))
-        }
+        return NextResponse.redirect(new URL('/admin/dashboard', req.url))
       }
       return res
     }
 
-    // 비로그인 → 권한 없음 페이지 (관리자 전용 경로이므로 일반 login으로 보내지 않음)
+    // 비로그인 → 권한 없음 페이지
     if (!session) {
       return NextResponse.redirect(new URL('/403', req.url))
     }
 
-    // RDS에서 역할 확인
-    const role = await fetchAdminRole(req.nextUrl.origin, session.access_token)
-
-    // user 또는 역할 확인 실패 → 403
-    if (!role || (role !== 'admin' && role !== 'superadmin')) {
-      return NextResponse.redirect(new URL('/403', req.url))
-    }
-
-    // /admin/accounts → superadmin 전용
-    if (pathname.startsWith('/admin/accounts') && role !== 'superadmin') {
-      return NextResponse.redirect(new URL('/admin/dashboard', req.url))
-    }
-
+    // 세션이 있으면 통과 – 역할 확인은 admin/dashboard 등 클라이언트 측에서 수행
     return res
   }
 

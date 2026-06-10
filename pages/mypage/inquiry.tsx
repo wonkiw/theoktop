@@ -27,19 +27,24 @@ export default function InquiryPage() {
   const [formError, setFormError]   = useState('')
   const [formSuccess, setFormSuccess] = useState('')
 
+  const [token, setToken] = useState('')
+
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      if (!data.user) {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) {
         router.replace('/login?redirect=/mypage/inquiry')
         return
       }
-      loadInquiries()
+      setToken(session.access_token)
+      loadInquiries(session.access_token)
     })
   }, [])
 
-  const loadInquiries = async () => {
+  const loadInquiries = async (accessToken: string) => {
     setLoading(true)
-    const res = await fetch('/api/mypage/inquiries')
+    const res = await fetch('/api/mypage/inquiries', {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
     if (res.ok) {
       const json = await res.json()
       setInquiries(json.inquiries ?? [])
@@ -58,7 +63,10 @@ export default function InquiryPage() {
     try {
       const res = await fetch('/api/mypage/inquiries', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ title, content }),
       })
       const json = await res.json()
@@ -69,7 +77,7 @@ export default function InquiryPage() {
         setTitle('')
         setContent('')
         setShowForm(false)
-        await loadInquiries()
+        await loadInquiries(token)
       }
     } catch {
       setFormError('네트워크 오류가 발생했습니다.')
