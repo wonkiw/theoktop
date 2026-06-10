@@ -25,12 +25,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const client = await pool.connect()
   try {
-    const { rows: userRows } = await client.query(
+    let { rows: userRows } = await client.query(
       'SELECT id FROM users WHERE supabase_uid = $1',
       [uid]
     )
+    // DB에 유저가 없으면 자동 생성 (OAuth/소셜 로그인 후 콜백이 누락된 경우 복구)
     if (userRows.length === 0) {
-      return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' })
+      const { data: { user: sbUser } } = await supabaseAdmin.auth.admin.getUserById(uid)
+        .catch(() => ({ data: { user: null } }))
+      if (sbUser) {
+        const email = sbUser.email ?? ''
+        const name  = sbUser.user_metadata?.full_name ?? sbUser.user_metadata?.name ?? email
+        const { rows: inserted } = await client.query(
+          `INSERT INTO users (supabase_uid, email, name, role, provider)
+           VALUES ($1, $2, $3, 'user', $4)
+           ON CONFLICT (supabase_uid) DO UPDATE SET updated_at = NOW()
+           RETURNING id`,
+          [sbUser.id, email, name, sbUser.app_metadata?.provider ?? 'email']
+        )
+        userRows = inserted
+      } else {
+        return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' })
+      }
     }
 
     const { rows } = await client.query(
