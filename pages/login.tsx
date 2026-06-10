@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
@@ -23,6 +23,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
+  const [checking, setChecking] = useState(true)
 
   const getRedirectTarget = () => {
     if (typeof redirectParam === 'string' && redirectParam.startsWith('/')) {
@@ -30,6 +31,26 @@ export default function LoginPage() {
     }
     return '/mypage'
   }
+
+  // 이미 로그인된 경우(localStorage 세션 있지만 쿠키 없어서 미들웨어가 여기로 리다이렉트한 경우)
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) { setChecking(false); return }
+      try {
+        await fetch('/api/auth/sync-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            access_token: session.access_token,
+            refresh_token: session.refresh_token,
+          }),
+        })
+      } catch {}
+      const params = new URLSearchParams(window.location.search)
+      const target = params.get('redirect')
+      window.location.href = (target && target.startsWith('/')) ? target : '/mypage'
+    })
+  }, [])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -91,6 +112,14 @@ export default function LoginPage() {
     : queryError === 'db_failed'    ? '계정 처리 중 오류가 발생했습니다.'
     : queryError === 'session_failed' ? '세션 생성에 실패했습니다.'
     : null
+
+  if (checking) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f5f5f5' }}>
+        <div style={{ fontSize: 14, color: '#999' }}>로딩 중...</div>
+      </div>
+    )
+  }
 
   return (
     <>
