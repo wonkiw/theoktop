@@ -93,6 +93,15 @@ export default function AdminLoginPage() {
       }
 
       if (json.role === 'admin' || json.role === 'superadmin') {
+        // 미들웨어가 읽는 쿠키에 세션 동기화
+        await fetch('/api/auth/sync-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            access_token:  data.session.access_token,
+            refresh_token: data.session.refresh_token,
+          }),
+        })
         router.replace('/admin/dashboard')
       } else {
         await supabase.auth.signOut()

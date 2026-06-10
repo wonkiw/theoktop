@@ -46,10 +46,21 @@ export default function LoginPage() {
 
     setLoading(true)
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
       if (authError) {
         setError(localizeError(authError.message))
       } else {
+        // 미들웨어가 읽는 쿠키에 세션 동기화
+        if (data.session) {
+          await fetch('/api/auth/sync-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              access_token:  data.session.access_token,
+              refresh_token: data.session.refresh_token,
+            }),
+          })
+        }
         router.push(getRedirectTarget())
       }
     } catch {
