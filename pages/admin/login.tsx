@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { supabase } from '../../lib/supabase'
@@ -13,6 +13,21 @@ export default function AdminLoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
+
+  // 이미 로그인된 관리자는 대시보드로
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session) return
+      const res = await fetch('/api/admin/auth/check-role', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      })
+      const json = await res.json()
+      if (json.role === 'admin' || json.role === 'superadmin') {
+        router.replace('/admin/dashboard')
+      }
+    })
+  }, [router])
 
   const [attempts, setAttempts]       = useState(0)
   const [lockedUntil, setLockedUntil] = useState<number | null>(null)

@@ -973,13 +973,14 @@
   ───────────────────────────────────────────────────────────── */
 
   /* Google / Kakao 소셜 로그인 (Supabase OAuth) */
-  const SITE_URL = window.location.origin;
+  // www 여부와 관계없이 항상 정규 도메인 콜백 사용
+  const OAUTH_CALLBACK = 'https://theoktop.com/api/auth/callback';
 
   document.getElementById('googleLoginBtn')?.addEventListener('click', function () {
     if (!supabaseClient) { showToast('Supabase가 설정되지 않았습니다.', 'error'); return; }
     supabaseClient.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: SITE_URL + '/api/auth/callback' },
+      options: { redirectTo: OAUTH_CALLBACK },
     });
   });
 
@@ -987,7 +988,7 @@
     if (!supabaseClient) { showToast('Supabase가 설정되지 않았습니다.', 'error'); return; }
     supabaseClient.auth.signInWithOAuth({
       provider: 'kakao',
-      options: { redirectTo: SITE_URL + '/api/auth/callback' },
+      options: { redirectTo: OAUTH_CALLBACK },
     });
   });
 

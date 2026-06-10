@@ -6,19 +6,24 @@ export default function ForbiddenPage() {
 
   return (
     <>
-      <Head><title>403 접근 권한 없음 | THE OKTOP</title></Head>
+      <Head><title>권한 없음 | THE OKTOP</title></Head>
 
       <div style={s.page}>
         <div style={s.card}>
           <div style={s.code}>403</div>
           <h1 style={s.title}>접근 권한이 없습니다</h1>
           <p style={s.desc}>
-            이 페이지에 접근할 수 있는 권한이 없습니다.<br />
-            계정 권한을 확인하거나 관리자에게 문의해주세요.
+            이 페이지는 관리자만 접근할 수 있습니다.<br />
+            관리자 계정으로 로그인하거나, 권한이 필요하면 담당자에게 문의해주세요.
           </p>
-          <button style={s.btn} onClick={() => router.push('/')}>
-            메인 페이지로 돌아가기
-          </button>
+          <div style={s.btnGroup}>
+            <button style={s.btnSecondary} onClick={() => router.push('/admin/login')}>
+              관리자 로그인
+            </button>
+            <button style={s.btn} onClick={() => router.push('/')}>
+              메인 페이지로
+            </button>
+          </div>
         </div>
       </div>
     </>
@@ -63,6 +68,22 @@ const s: Record<string, React.CSSProperties> = {
     color: '#777',
     lineHeight: 1.7,
     marginBottom: 32,
+  },
+  btnGroup: {
+    display: 'flex',
+    gap: 12,
+    justifyContent: 'center',
+    flexWrap: 'wrap' as const,
+  },
+  btnSecondary: {
+    padding: '12px 28px',
+    background: '#fff',
+    color: '#111',
+    border: '1.5px solid #111',
+    borderRadius: 8,
+    fontSize: 14,
+    fontWeight: 600,
+    cursor: 'pointer',
   },
   btn: {
     padding: '12px 28px',

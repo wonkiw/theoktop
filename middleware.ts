@@ -18,7 +18,14 @@ async function fetchAdminRole(origin: string, token: string): Promise<string | n
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next()
-  const { pathname } = req.nextUrl
+  const { pathname, host } = req.nextUrl
+
+  // www → non-www 리다이렉트
+  if (host.startsWith('www.')) {
+    const url = req.nextUrl.clone()
+    url.host = host.replace(/^www\./, '')
+    return NextResponse.redirect(url, { status: 301 })
+  }
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -39,15 +46,21 @@ export async function middleware(req: NextRequest) {
 
   // ── /admin/* 보호 ────────────────────────────────────────────
   if (pathname.startsWith('/admin')) {
-    // 로그인 페이지는 누구나 접근 가능
-    if (pathname === '/admin/login') return res
+    // 관리자 로그인 페이지
+    if (pathname === '/admin/login') {
+      // 이미 로그인된 관리자는 대시보드로 이동
+      if (session) {
+        const role = await fetchAdminRole(req.nextUrl.origin, session.access_token)
+        if (role === 'admin' || role === 'superadmin') {
+          return NextResponse.redirect(new URL('/admin/dashboard', req.url))
+        }
+      }
+      return res
+    }
 
-    // 비로그인 → 관리자 로그인으로 리다이렉트
+    // 비로그인 → 권한 없음 페이지 (관리자 전용 경로이므로 일반 login으로 보내지 않음)
     if (!session) {
-      const url = req.nextUrl.clone()
-      url.pathname = '/admin/login'
-      url.searchParams.set('redirect', pathname)
-      return NextResponse.redirect(url)
+      return NextResponse.redirect(new URL('/403', req.url))
     }
 
     // RDS에서 역할 확인
