@@ -8,17 +8,40 @@ import styles from '../styles/Header.module.css'
 export default function Header() {
   const router = useRouter()
   const [user, setUser]       = useState<User | null>(null)
+  const [role, setRole]       = useState<string | null>(null)
   const [ready, setReady]     = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
 
+  const fetchRole = async () => {
+    try {
+      const res = await fetch('/api/auth/me')
+      if (res.ok) {
+        const data = await res.json()
+        setRole(data.role ?? null)
+      } else {
+        setRole(null)
+      }
+    } catch {
+      setRole(null)
+    }
+  }
+
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user ?? null)
+      const u = data.user ?? null
+      setUser(u)
+      if (u) fetchRole()
       setReady(true)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
-      setUser(session?.user ?? null)
+      const u = session?.user ?? null
+      setUser(u)
+      if (u) {
+        fetchRole()
+      } else {
+        setRole(null)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -33,6 +56,7 @@ export default function Header() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
+    setRole(null)
     setMenuOpen(false)
     router.push('/')
   }
@@ -43,11 +67,15 @@ export default function Header() {
     user?.email?.split('@')[0] ??
     ''
 
+  const isAdmin = role === 'admin' || role === 'superadmin'
+  const myPageHref = isAdmin ? '/admin/dashboard' : '/mypage'
+  const myPageLabel = isAdmin ? '관리자 대시보드' : '마이페이지'
+
   const AuthDesktop = () =>
     user ? (
       <>
         <span className={styles.greeting}>{displayName}님</span>
-        <Link href="/mypage" className={styles.navLink}>마이페이지</Link>
+        <Link href={myPageHref} className={styles.navLink}>{myPageLabel}</Link>
         <button onClick={handleLogout} className={styles.logoutBtn}>로그아웃</button>
       </>
     ) : (
@@ -61,7 +89,7 @@ export default function Header() {
     user ? (
       <>
         <span className={styles.mobileGreeting}>{displayName}님</span>
-        <Link href="/mypage" className={styles.mobileLink}>마이페이지</Link>
+        <Link href={myPageHref} className={styles.mobileLink}>{myPageLabel}</Link>
         <button onClick={handleLogout} className={styles.mobileLogout}>로그아웃</button>
       </>
     ) : (

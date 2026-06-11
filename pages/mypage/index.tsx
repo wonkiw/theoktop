@@ -1,7 +1,10 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
+import type { GetServerSideProps } from 'next'
 import { supabase } from '../../lib/supabase'
+import { createSSRSupabaseClient } from '../../lib/supabaseServer'
+import { pool } from '../../lib/db'
 import Header from '../../components/Header'
 
 type Document = {
@@ -71,10 +74,7 @@ export default function MyPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        router.replace('/login?redirect=/mypage')
-        return
-      }
+      if (!session) return // getServerSideProps에서 처리
       setToken(session.access_token)
       const name =
         session.user.user_metadata?.full_name ??
@@ -557,4 +557,32 @@ const s: Record<string, React.CSSProperties> = {
     padding: '8px 16px', borderRadius: 20,
     border: '1px solid #e0e0e0', background: '#fff',
   },
+}
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const supabase = createSSRSupabaseClient(ctx)
+  const { data: { session } } = await supabase.auth.getSession()
+
+  if (!session) {
+    return { redirect: { destination: '/login?redirect=/mypage', permanent: false } }
+  }
+
+  const client = await pool.connect()
+  try {
+    const { rows } = await client.query(
+      'SELECT role FROM users WHERE supabase_uid = $1',
+      [session.user.id]
+    )
+    if (!rows.length) {
+      return { redirect: { destination: '/login', permanent: false } }
+    }
+    const role = rows[0].role as string
+    if (role === 'admin' || role === 'superadmin') {
+      return { redirect: { destination: '/admin/dashboard', permanent: false } }
+    }
+  } finally {
+    client.release()
+  }
+
+  return { props: {} }
 }
