@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/router'
 import Head from 'next/head'
 import { supabase } from '../../lib/supabase'
 
@@ -7,8 +6,6 @@ const MAX_ATTEMPTS = 5
 const LOCKOUT_SECONDS = 30
 
 export default function AdminLoginPage() {
-  const router = useRouter()
-
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')

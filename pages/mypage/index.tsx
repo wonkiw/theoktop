@@ -208,7 +208,6 @@ export default function MyPage() {
             {paged.map((order, idx) => {
               const isOpen = expanded === order.id
               const status = STATUS_INFO[order.status] ?? STATUS_INFO.pending
-              const globalIdx = (page - 1) * PAGE_SIZE + idx + 1
               const isDone = order.status === 'completed'
 
               return (
