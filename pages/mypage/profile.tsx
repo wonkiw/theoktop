@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import Header from '../../components/Header'
+import MypageLayout from '@/components/MypageLayout'
 
 type UserProfile = {
   name: string
@@ -86,23 +86,22 @@ export default function ProfilePage() {
   }
 
   if (loading) {
-    return <div style={s.page}><div style={s.center}>불러오는 중...</div></div>
+    return <MypageLayout><div style={s.center}>불러오는 중...</div></MypageLayout>
   }
 
   if (error) {
     return (
-      <div style={s.page}>
+      <MypageLayout>
         <div style={s.center}>
           <p style={s.error}>{error}</p>
           <Link href="/mypage" style={s.backLink}>마이페이지로 돌아가기</Link>
         </div>
-      </div>
+      </MypageLayout>
     )
   }
 
   return (
-    <div style={s.page}>
-      <Header />
+    <MypageLayout>
       <div style={s.container}>
 
         {/* Sub-nav */}
@@ -193,7 +192,7 @@ export default function ProfilePage() {
         </div>
 
       </div>
-    </div>
+    </MypageLayout>
   )
 }
 

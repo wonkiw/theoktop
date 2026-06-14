@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { getSupabaseClient } from '../../lib/supabase'
-import Header from '../../components/Header'
+import { getSupabaseClient } from '@/lib/supabase'
+import MypageLayout from '@/components/MypageLayout'
 
 interface Inquiry {
   id: number
@@ -87,15 +87,14 @@ export default function InquiryPage() {
 
   if (loading) {
     return (
-      <div style={s.page}>
+      <MypageLayout>
         <div style={s.spinner}>불러오는 중...</div>
-      </div>
+      </MypageLayout>
     )
   }
 
   return (
-    <div style={s.page}>
-      <Header />
+    <MypageLayout>
       <div style={s.container}>
 
         <div style={s.pageHeader}>
@@ -214,7 +213,7 @@ export default function InquiryPage() {
         </section>
 
       </div>
-    </div>
+    </MypageLayout>
   )
 }
 

@@ -1,9 +1,9 @@
 import { useRouter } from 'next/router'
 import type { GetServerSideProps } from 'next'
 import Link from 'next/link'
-import { createSSRSupabaseClient } from '../../../lib/supabaseServer'
-import { getPool } from '../../../lib/db'
-import Header from '../../../components/Header'
+import { createSSRSupabaseClient } from '@/lib/supabaseServer'
+import { getPool } from '@/lib/db'
+import MypageLayout from '@/components/MypageLayout'
 
 interface InquiryItem {
   id: number
@@ -29,8 +29,7 @@ export default function InquiriesIndex({ inquiries }: { inquiries: InquiryItem[]
   const router = useRouter()
 
   return (
-    <div style={s.page}>
-      <Header />
+    <MypageLayout>
       <div style={s.container}>
 
         <div style={s.pageHeader}>
@@ -89,7 +88,7 @@ export default function InquiriesIndex({ inquiries }: { inquiries: InquiryItem[]
         )}
 
       </div>
-    </div>
+    </MypageLayout>
   )
 }
 

@@ -1,10 +1,10 @@
 import { useState, useRef } from 'react'
 import type { GetServerSideProps } from 'next'
 import Link from 'next/link'
-import { createSSRSupabaseClient } from '../../../lib/supabaseServer'
-import { getPool } from '../../../lib/db'
-import Header from '../../../components/Header'
-import { getSupabaseClient } from '../../../lib/supabase'
+import { createSSRSupabaseClient } from '@/lib/supabaseServer'
+import { getPool } from '@/lib/db'
+import MypageLayout from '@/components/MypageLayout'
+import { getSupabaseClient } from '@/lib/supabase'
 
 interface Inquiry {
   id: number
@@ -121,8 +121,7 @@ export default function InquiryDetail({
   }
 
   return (
-    <div style={s.page}>
-      <Header />
+    <MypageLayout>
       <div style={s.container}>
 
         <div style={s.nav}>
@@ -220,7 +219,7 @@ export default function InquiryDetail({
         </div>
 
       </div>
-    </div>
+    </MypageLayout>
   )
 }
 

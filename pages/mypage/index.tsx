@@ -2,10 +2,10 @@ import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import type { GetServerSideProps } from 'next'
-import { getSupabaseClient } from '../../lib/supabase'
-import { createSSRSupabaseClient } from '../../lib/supabaseServer'
-import { getPool } from '../../lib/db'
-import Header from '../../components/Header'
+import { getSupabaseClient } from '@/lib/supabase'
+import { createSSRSupabaseClient } from '@/lib/supabaseServer'
+import { getPool } from '@/lib/db'
+import MypageLayout from '@/components/MypageLayout'
 
 type Document = {
   id: string
@@ -60,7 +60,7 @@ function formatDateTime(iso: string) {
   return `${ymd} ${hms}`
 }
 
-export default function MyPage() {
+export default function MyPage({ user }: { user: { email?: string; name?: string; role?: string } }) {
   const router = useRouter()
   const [token, setToken]       = useState('')
   const [loading, setLoading]   = useState(true)
@@ -141,8 +141,7 @@ export default function MyPage() {
   }
 
   return (
-    <div style={s.page}>
-      <Header />
+    <MypageLayout userEmail={user?.email}>
       <div style={s.container}>
 
         {/* 타이틀 바 */}
@@ -327,7 +326,7 @@ export default function MyPage() {
         </div>
 
       </div>
-    </div>
+    </MypageLayout>
   )
 }
 
@@ -565,29 +564,49 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     const { data: { session } } = await supabase.auth.getSession()
 
     if (!session) {
-      return { redirect: { destination: '/login?redirect=/mypage', permanent: false } }
+      return { redirect: { destination: '/login', permanent: false } }
     }
 
-    const client = await getPool().connect()
     try {
-      const { rows } = await client.query(
-        'SELECT role FROM users WHERE supabase_uid = $1',
-        [session.user.id]
-      )
-      if (!rows.length) {
-        return { redirect: { destination: '/login', permanent: false } }
-      }
-      const role = rows[0].role as string
-      if (role === 'admin' || role === 'superadmin') {
-        return { redirect: { destination: '/admin/dashboard', permanent: false } }
-      }
-    } finally {
-      client.release()
-    }
+      const client = await getPool().connect()
+      try {
+        let { rows } = await client.query(
+          'SELECT * FROM users WHERE supabase_uid = $1',
+          [session.user.id]
+        )
 
-    return { props: {} }
+        if (rows.length === 0) {
+          await client.query(
+            `INSERT INTO users (supabase_uid, email, name, role, provider)
+             VALUES ($1, $2, $3, 'user', 'email')
+             ON CONFLICT (supabase_uid) DO NOTHING`,
+            [session.user.id, session.user.email,
+             session.user.user_metadata?.full_name || '']
+          )
+          rows = [{
+            email: session.user.email,
+            name: session.user.user_metadata?.full_name || '',
+            role: 'user',
+          }]
+        }
+
+        return { props: { user: rows[0] } }
+      } finally {
+        client.release()
+      }
+    } catch (dbErr: any) {
+      console.error('[mypage] DB error:', dbErr)
+      return {
+        props: {
+          user: {
+            email: session.user.email,
+            name: '',
+            role: 'user',
+          },
+        },
+      }
+    }
   } catch (err) {
-    console.error('[mypage] getServerSideProps error:', err)
-    return { props: {} }
+    return { redirect: { destination: '/login', permanent: false } }
   }
 }
