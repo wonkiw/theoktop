@@ -7,12 +7,8 @@ frontend:
     build:
       commands:
         - npm run build
-        - mkdir -p .next/standalone/public
-        - if [ -d public ]; then cp -r public/. .next/standalone/public/; fi
-        - mkdir -p .next/standalone/.next/static
-        - cp -r .next/static/. .next/standalone/.next/static/
   artifacts:
-    baseDirectory: .next/standalone
+    baseDirectory: .next
     files:
       - '**/*'
   cache:
