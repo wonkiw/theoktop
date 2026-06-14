@@ -51,8 +51,23 @@ export default function Header() {
 
   const closeMenu = () => setMenuOpen(false)
 
-  const mypageHref     = isLoggedIn ? '/mypage'            : '/login'
-  const inquiryHref    = isLoggedIn ? '/mypage/new-inquiry' : '/login'
+  /* ── 모바일 메뉴 버튼 공통 스타일 ── */
+  const mobileBtn = (extra?: React.CSSProperties): React.CSSProperties => ({
+    display: 'block',
+    width: '100%',
+    padding: '14px 20px',
+    background: 'transparent',
+    border: 'none',
+    borderBottom: '1px solid rgba(255,255,255,0.1)',
+    color: GOLD,
+    fontSize: '15px',
+    fontWeight: 500,
+    textAlign: 'left',
+    cursor: 'pointer',
+    letterSpacing: '1px',
+    fontFamily: "'Pretendard','Apple SD Gothic Neo',sans-serif",
+    ...extra,
+  })
 
   return (
     <>
@@ -83,32 +98,6 @@ export default function Header() {
         }
         .oktop-hamburger.open span:nth-child(3) {
           transform: translateY(-7px) rotate(-45deg);
-        }
-        .oktop-mobile-menu a,
-        .oktop-mobile-menu button {
-          display: block;
-          width: 100%;
-          padding: 14px 20px;
-          font-size: 15px;
-          font-weight: 500;
-          color: rgba(255,255,255,0.88);
-          text-decoration: none;
-          background: none;
-          border: none;
-          border-bottom: 1px solid rgba(255,255,255,0.08);
-          text-align: left;
-          cursor: pointer;
-          font-family: inherit;
-          letter-spacing: 0.3px;
-        }
-        .oktop-mobile-menu a:hover,
-        .oktop-mobile-menu button:hover {
-          color: ${GOLD};
-          background: rgba(212,175,92,0.06);
-        }
-        .oktop-mobile-menu a:last-child,
-        .oktop-mobile-menu button:last-child {
-          border-bottom: none;
         }
         @media (min-width: 769px) {
           .oktop-hamburger { display: none !important; }
@@ -157,9 +146,9 @@ export default function Header() {
 
           {/* PC 버튼 */}
           <nav className="oktop-header-nav" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {ready && (
+            {ready && (isLoggedIn ? (
               <>
-                <Link href={mypageHref} style={{
+                <Link href="/mypage" style={{
                   padding: '8px 16px',
                   border: '1px solid rgba(212,175,92,0.6)',
                   color: 'rgba(255,255,255,0.88)',
@@ -171,7 +160,7 @@ export default function Header() {
                 }}>
                   마이페이지
                 </Link>
-                <Link href={inquiryHref} style={{
+                <Link href="/mypage/new-inquiry" style={{
                   padding: '8px 16px',
                   background: GOLD,
                   color: '#111',
@@ -183,22 +172,40 @@ export default function Header() {
                 }}>
                   상담신청
                 </Link>
-                {isLoggedIn && (
-                  <button onClick={handleLogout} style={{
-                    border: '1px solid rgba(255,255,255,0.4)',
-                    color: 'rgba(255,255,255,0.8)',
-                    background: 'transparent',
-                    padding: '6px 12px',
-                    borderRadius: 4,
-                    fontSize: 12,
-                    cursor: 'pointer',
-                    fontFamily: 'inherit',
-                  }}>
-                    로그아웃
-                  </button>
-                )}
+                <button onClick={handleLogout} style={{
+                  marginLeft: 8,
+                  padding: '6px 14px',
+                  background: 'transparent',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  borderRadius: 4,
+                  color: 'rgba(255,255,255,0.7)',
+                  fontSize: 12,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  letterSpacing: '1px',
+                }}>
+                  로그아웃
+                </button>
               </>
-            )}
+            ) : (
+              <button
+                onClick={() => { window.location.href = '/login' }}
+                style={{
+                  padding: '8px 18px',
+                  background: GOLD,
+                  color: '#111',
+                  border: 'none',
+                  borderRadius: 6,
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: 'inherit',
+                  letterSpacing: '1px',
+                }}
+              >
+                로그인
+              </button>
+            ))}
           </nav>
 
           {/* 햄버거 */}
@@ -219,22 +226,44 @@ export default function Header() {
 
         {/* 모바일 드롭다운 */}
         {menuOpen && (
-          <div
-            className="oktop-mobile-menu"
-            style={{
-              background: 'rgba(18,18,15,0.98)',
-              borderTop: `1px solid rgba(212,175,92,0.2)`,
-            }}
-          >
-            {ready && (
+          <div style={{ background: 'rgba(18,18,15,0.98)', borderTop: `1px solid rgba(212,175,92,0.2)` }}>
+            {ready && (isLoggedIn ? (
               <>
-                <Link href={mypageHref} onClick={closeMenu}>마이페이지</Link>
-                <Link href={inquiryHref} onClick={closeMenu}>상담신청</Link>
-                {isLoggedIn && (
-                  <button onClick={handleLogout}>로그아웃</button>
-                )}
+                <button
+                  onClick={() => { closeMenu(); window.location.href = '/mypage' }}
+                  style={mobileBtn()}
+                >
+                  마이페이지
+                </button>
+                <button
+                  onClick={() => { closeMenu(); window.location.href = '/mypage/new-inquiry' }}
+                  style={mobileBtn()}
+                >
+                  상담신청
+                </button>
+                <button
+                  onClick={handleLogout}
+                  style={mobileBtn({ borderBottom: 'none', color: 'rgba(255,255,255,0.5)', fontSize: '14px', fontWeight: 400 })}
+                >
+                  로그아웃
+                </button>
               </>
-            )}
+            ) : (
+              <>
+                <button
+                  onClick={() => { closeMenu(); window.location.href = '/login' }}
+                  style={mobileBtn()}
+                >
+                  마이페이지
+                </button>
+                <button
+                  onClick={() => { closeMenu(); window.location.href = '/login' }}
+                  style={mobileBtn({ borderBottom: 'none' })}
+                >
+                  상담신청
+                </button>
+              </>
+            ))}
           </div>
         )}
       </header>
