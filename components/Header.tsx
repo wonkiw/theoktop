@@ -1,30 +1,38 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import type { User } from '@supabase/supabase-js'
 import { getSupabaseClient } from '../lib/supabase'
 
 const GOLD = '#D4AF5C'
 const DARK_BG = 'rgba(15,15,13,0.97)'
 
 export default function Header() {
-  const [user, setUser]       = useState<User | null>(null)
-  const [ready, setReady]     = useState(false)
-  const [menuOpen, setMenuOpen] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [userRole, setUserRole]     = useState<string | null>(null)
+  const [ready, setReady]           = useState(false)
+  const [menuOpen, setMenuOpen]     = useState(false)
 
   useEffect(() => {
-    getSupabaseClient().auth.getUser().then(({ data }) => {
-      setUser(data.user ?? null)
+    const supabase = getSupabaseClient()
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsLoggedIn(!!session)
+      if (session) {
+        fetch('/api/auth/me')
+          .then(res => res.json())
+          .then(data => setUserRole(data.role))
+          .catch(() => setUserRole('user'))
+      }
       setReady(true)
     })
 
-    const { data: { subscription } } = getSupabaseClient().auth.onAuthStateChange((_, session) => {
-      setUser(session?.user ?? null)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setIsLoggedIn(!!session)
+      if (!session) setUserRole(null)
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  // 드롭다운 열릴 때 스크롤 막기
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
@@ -42,6 +50,9 @@ export default function Header() {
   }
 
   const closeMenu = () => setMenuOpen(false)
+
+  const mypageHref     = isLoggedIn ? '/mypage'            : '/login'
+  const inquiryHref    = isLoggedIn ? '/mypage/new-inquiry' : '/login'
 
   return (
     <>
@@ -108,15 +119,10 @@ export default function Header() {
         }
       `}</style>
 
-      {/* 오버레이 */}
       {menuOpen && (
         <div
           onClick={closeMenu}
-          style={{
-            position: 'fixed', inset: 0,
-            background: 'rgba(0,0,0,0.5)',
-            zIndex: 998,
-          }}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 998 }}
           className="oktop-overlay"
         />
       )}
@@ -151,11 +157,11 @@ export default function Header() {
 
           {/* PC 버튼 */}
           <nav className="oktop-header-nav" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            {ready && (user ? (
+            {ready && (
               <>
-                <Link href="/mypage" style={{
+                <Link href={mypageHref} style={{
                   padding: '8px 16px',
-                  border: '1px solid rgba(212,175,55,0.6)',
+                  border: '1px solid rgba(212,175,92,0.6)',
                   color: 'rgba(255,255,255,0.88)',
                   background: 'transparent',
                   borderRadius: 6,
@@ -165,7 +171,7 @@ export default function Header() {
                 }}>
                   마이페이지
                 </Link>
-                <Link href="/mypage/new-inquiry" style={{
+                <Link href={inquiryHref} style={{
                   padding: '8px 16px',
                   background: GOLD,
                   color: '#111',
@@ -177,32 +183,22 @@ export default function Header() {
                 }}>
                   상담신청
                 </Link>
-                <button onClick={handleLogout} style={{
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  color: 'rgba(255,255,255,0.7)',
-                  background: 'transparent',
-                  padding: '6px 12px',
-                  borderRadius: 6,
-                  fontSize: 12,
-                  cursor: 'pointer',
-                  fontFamily: 'inherit',
-                }}>
-                  로그아웃
-                </button>
+                {isLoggedIn && (
+                  <button onClick={handleLogout} style={{
+                    border: '1px solid rgba(255,255,255,0.4)',
+                    color: 'rgba(255,255,255,0.8)',
+                    background: 'transparent',
+                    padding: '6px 12px',
+                    borderRadius: 4,
+                    fontSize: 12,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                  }}>
+                    로그아웃
+                  </button>
+                )}
               </>
-            ) : (
-              <Link href="/login" style={{
-                padding: '8px 18px',
-                background: GOLD,
-                color: '#111',
-                borderRadius: 6,
-                fontSize: 13,
-                fontWeight: 700,
-                textDecoration: 'none',
-              }}>
-                로그인
-              </Link>
-            ))}
+            )}
           </nav>
 
           {/* 햄버거 */}
@@ -230,15 +226,15 @@ export default function Header() {
               borderTop: `1px solid rgba(212,175,92,0.2)`,
             }}
           >
-            {ready && (user ? (
+            {ready && (
               <>
-                <Link href="/mypage" onClick={closeMenu}>마이페이지</Link>
-                <Link href="/mypage/new-inquiry" onClick={closeMenu}>상담신청</Link>
-                <button onClick={handleLogout}>로그아웃</button>
+                <Link href={mypageHref} onClick={closeMenu}>마이페이지</Link>
+                <Link href={inquiryHref} onClick={closeMenu}>상담신청</Link>
+                {isLoggedIn && (
+                  <button onClick={handleLogout}>로그아웃</button>
+                )}
               </>
-            ) : (
-              <Link href="/login" onClick={closeMenu}>로그인</Link>
-            ))}
+            )}
           </div>
         )}
       </header>

@@ -330,6 +330,55 @@
 
 
   /* ─────────────────────────────────────────────────────────────
+     IMAGE LIGHTBOX
+  ───────────────────────────────────────────────────────────── */
+
+  var imgLightbox   = document.getElementById('imgLightbox');
+  var lightboxImg   = document.getElementById('lightboxImg');
+  var lightboxClose = document.getElementById('lightboxClose');
+
+  function openLightbox(src) {
+    if (!imgLightbox || !lightboxImg) return;
+    lightboxImg.src = src;
+    imgLightbox.hidden = false;
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    if (!imgLightbox) return;
+    imgLightbox.hidden = true;
+    if (!modalOverlay || modalOverlay.hidden) {
+      document.body.style.overflow = '';
+    }
+  }
+
+  document.querySelectorAll('.gallery-photo img').forEach(function (img) {
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', function (e) {
+      e.stopPropagation();
+      openLightbox(img.src);
+    });
+  });
+
+  if (imgLightbox) {
+    imgLightbox.addEventListener('click', closeLightbox);
+  }
+  if (lightboxImg) {
+    lightboxImg.addEventListener('click', function (e) { e.stopPropagation(); });
+  }
+  if (lightboxClose) {
+    lightboxClose.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeLightbox();
+    });
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && imgLightbox && !imgLightbox.hidden) closeLightbox();
+  });
+
+
+  /* ─────────────────────────────────────────────────────────────
      RECENT SEARCHES (localStorage)
   ───────────────────────────────────────────────────────────── */
 

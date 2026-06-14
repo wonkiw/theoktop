@@ -1207,6 +1207,13 @@
     아래 YOUR_SUPABASE_URL, YOUR_SUPABASE_ANON_KEY를
     .env.local의 NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_ANON_KEY 값으로 교체
   -->
+  <!-- ══════════════ 이미지 라이트박스 ══════════════ -->
+  <div id="imgLightbox" hidden style="position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;background:rgba(0,0,0,0.92);display:flex;align-items:center;justify-content:center;cursor:zoom-out;" role="dialog" aria-modal="true" aria-label="이미지 확대">
+    <button id="lightboxClose" aria-label="닫기" style="position:absolute;top:20px;right:24px;background:none;border:none;color:#fff;font-size:32px;cursor:pointer;line-height:1;z-index:10000;">×</button>
+    <img id="lightboxImg" src="" alt="확대 이미지" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <p style="position:absolute;bottom:20px;color:rgba(255,255,255,0.5);font-size:13px;pointer-events:none;margin:0;">클릭하면 닫힙니다</p>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script>
     window.SUPABASE_URL      = 'https://zujtfawjkaquigomclfe.supabase.co';
