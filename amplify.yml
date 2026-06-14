@@ -7,15 +7,15 @@ frontend:
     build:
       commands:
         - npm run build
-        # standalone 모드: public/ 과 .next/static/ 을 번들에 복사
-        - cp -r public .next/standalone/public
-        - cp -r .next/static .next/standalone/.next/static
+        - mkdir -p .next/standalone/public
+        - if [ -d public ]; then cp -r public/. .next/standalone/public/; fi
+        - mkdir -p .next/standalone/.next/static
+        - cp -r .next/static/. .next/standalone/.next/static/
   artifacts:
-    # standalone 디렉토리를 배포 루트로 지정
     baseDirectory: .next/standalone
     files:
       - '**/*'
   cache:
     paths:
-      - .next/cache/**/*
       - node_modules/**/*
+      - .next/cache/**/*
