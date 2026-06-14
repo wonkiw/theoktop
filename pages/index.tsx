@@ -2,7 +2,18 @@ import type { GetServerSideProps } from 'next'
 import { createSSRSupabaseClient } from '../lib/supabaseServer'
 import { getPool } from '../lib/db'
 
-export default function Home() {
+export default function Home({ error }: { error?: boolean }) {
+  if (error) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f7f8fa' }}>
+        <div style={{ textAlign: 'center', fontFamily: 'sans-serif' }}>
+          <h2 style={{ color: '#333', marginBottom: 8 }}>서버 오류가 발생했습니다</h2>
+          <p style={{ color: '#999', marginBottom: 20 }}>잠시 후 다시 시도해주세요</p>
+          <a href="/login" style={{ color: '#111', fontWeight: 600 }}>로그인</a>
+        </div>
+      </div>
+    )
+  }
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f7f8fa' }}>
       <p style={{ color: '#999', fontSize: 14, fontFamily: 'sans-serif' }}>이동 중...</p>
@@ -10,7 +21,7 @@ export default function Home() {
   )
 }
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
+export const getServerSideProps: GetServerSideProps<{ error?: boolean }> = async (ctx) => {
   try {
     const supabase = createSSRSupabaseClient(ctx)
     const { data: { session } } = await supabase.auth.getSession()
@@ -34,7 +45,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
       client.release()
     }
   } catch (err) {
-    console.error('[pages/index] getServerSideProps error:', err)
-    return { redirect: { destination: '/login', permanent: false } }
+    console.error('[index] error:', err)
+    return { props: { error: true } }
   }
 }
