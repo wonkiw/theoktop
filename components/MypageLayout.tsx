@@ -1,7 +1,3 @@
-import Link from 'next/link'
-import { useRouter } from 'next/router'
-import { getSupabaseClient } from '@/lib/supabase'
-
 export default function MypageLayout({
   children,
   userEmail,
@@ -9,11 +5,8 @@ export default function MypageLayout({
   children: React.ReactNode
   userEmail?: string
 }) {
-  const router = useRouter()
-
-  const handleLogout = async () => {
-    await getSupabaseClient().auth.signOut()
-    router.push('/')
+  const handleLogout = () => {
+    window.location.href = '/api/auth/logout'
   }
 
   return (
@@ -30,7 +23,7 @@ export default function MypageLayout({
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <Link href="/" style={{
+        <a href="/" style={{
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
@@ -40,7 +33,7 @@ export default function MypageLayout({
           fontWeight: 500,
         }}>
           ← 메인으로
-        </Link>
+        </a>
 
         <span style={{
           fontSize: '16px',

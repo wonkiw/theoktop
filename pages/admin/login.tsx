@@ -1,10 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Head from 'next/head'
 import { useRouter } from 'next/router'
-import type { GetServerSideProps } from 'next'
 import { getSupabaseClient } from '../../lib/supabase'
-import { createSSRSupabaseClient } from '../../lib/supabaseServer'
-import { getPool } from '../../lib/db'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_SECONDS = 30
@@ -190,27 +187,6 @@ export default function AdminLoginPage() {
       </div>
     </>
   )
-}
-
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  try {
-    const supabase = createSSRSupabaseClient(ctx)
-    const { data: { session } } = await supabase.auth.getSession()
-    if (session) {
-      const pool = getPool()
-      const { rows } = await pool.query(
-        'SELECT role FROM users WHERE supabase_uid = $1',
-        [session.user.id]
-      )
-      const role = rows[0]?.role
-      if (role === 'admin' || role === 'superadmin') {
-        return { redirect: { destination: '/admin/dashboard', permanent: false } }
-      }
-    }
-  } catch (err) {
-    console.error('[admin/login]', err)
-  }
-  return { props: {} }
 }
 
 const s: Record<string, React.CSSProperties> = {

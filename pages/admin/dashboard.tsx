@@ -130,9 +130,8 @@ export default function AdminDashboard() {
     return () => { cancelled = true }
   }, [router])
 
-  const handleLogout = async () => {
-    await getSupabaseClient().auth.signOut()
-    router.replace('/admin/login')
+  const handleLogout = () => {
+    window.location.href = '/api/auth/logout'
   }
 
   const visibleMenus = MENU_CARDS.filter(m =>

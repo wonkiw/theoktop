@@ -1,15 +1,15 @@
 import type { GetServerSideProps } from 'next'
-import { useRouter } from 'next/router'
 import { createSSRSupabaseClient } from '@/lib/supabaseServer'
-import { getPool } from '@/lib/db'
-import { getSupabaseClient } from '@/lib/supabase'
 
-export default function Home({ role, userEmail }: { role: string | null; userEmail: string | null }) {
-  const router = useRouter()
+interface Props {
+  isLoggedIn: boolean
+  userEmail: string | null
+  role: string | null
+}
 
-  const handleLogout = async () => {
-    await getSupabaseClient().auth.signOut()
-    router.reload()
+export default function Home({ isLoggedIn, userEmail, role }: Props) {
+  const handleLogout = () => {
+    window.location.href = '/api/auth/logout'
   }
 
   return (
@@ -25,7 +25,7 @@ export default function Home({ role, userEmail }: { role: string | null; userEma
           THE OKTOP
         </span>
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-          {role ? (
+          {isLoggedIn ? (
             <>
               <a
                 href="/mypage"
@@ -56,7 +56,7 @@ export default function Home({ role, userEmail }: { role: string | null; userEma
         <div style={{ textAlign: 'center' }}>
           <h1 style={{ fontSize: 28, fontWeight: 800, letterSpacing: 2, color: '#111', marginBottom: 12 }}>THE OKTOP</h1>
           <p style={{ color: '#999', marginBottom: 32, fontSize: 14 }}>부동산 전문 상담 서비스</p>
-          {role ? (
+          {isLoggedIn ? (
             <a
               href="/mypage"
               style={{ display: 'inline-block', padding: '13px 32px', background: '#111', color: '#fff', borderRadius: 8, fontSize: 15, fontWeight: 600, textDecoration: 'none' }}
@@ -77,32 +77,23 @@ export default function Home({ role, userEmail }: { role: string | null; userEma
   )
 }
 
-export const getServerSideProps: GetServerSideProps<{ role: string | null; userEmail: string | null }> = async (ctx) => {
+export const getServerSideProps: GetServerSideProps<Props> = async (ctx) => {
   try {
     const supabase = createSSRSupabaseClient(ctx)
     const { data: { session } } = await supabase.auth.getSession()
 
-    if (!session) return { props: { role: null, userEmail: null } }
+    if (!session) {
+      return { props: { isLoggedIn: false, userEmail: null, role: null } }
+    }
 
-    try {
-      const client = await getPool().connect()
-      try {
-        const { rows } = await client.query(
-          'SELECT role FROM users WHERE supabase_uid = $1',
-          [session.user.id]
-        )
-        const role = rows[0]?.role ?? 'user'
-        if (role === 'admin' || role === 'superadmin') {
-          return { redirect: { destination: '/admin/dashboard', permanent: false } }
-        }
-        return { props: { role, userEmail: session.user.email ?? null } }
-      } finally {
-        client.release()
-      }
-    } catch (dbErr) {
-      return { props: { role: 'user', userEmail: session.user.email ?? null } }
+    return {
+      props: {
+        isLoggedIn: true,
+        userEmail: session.user.email ?? null,
+        role: null,
+      },
     }
   } catch (err) {
-    return { props: { role: null, userEmail: null } }
+    return { props: { isLoggedIn: false, userEmail: null, role: null } }
   }
 }
