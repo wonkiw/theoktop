@@ -1,34 +1,44 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { Pool } from 'pg'
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const checks = {
-    supabaseUrl:  !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-    supabaseKey:  !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    dbHost:       !!process.env.DATABASE_HOST,
-    dbName:       !!process.env.DATABASE_NAME,
-    dbUser:       !!process.env.DATABASE_USER,
-    dbPassword:   !!process.env.DATABASE_PASSWORD,
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const envVars = {
+    DATABASE_HOST: process.env.DATABASE_HOST || 'NOT_SET',
+    DATABASE_NAME: process.env.DATABASE_NAME || 'NOT_SET',
+    DATABASE_USER: process.env.DATABASE_USER || 'NOT_SET',
+    DATABASE_PASSWORD: process.env.DATABASE_PASSWORD ? 'SET' : 'NOT_SET',
+    DATABASE_PORT: process.env.DATABASE_PORT || 'NOT_SET',
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT_SET',
+    ALL_DB_KEYS: Object.keys(process.env).filter(k => k.startsWith('DATABASE')),
   }
 
   let dbConnected = false
-  let dbError: string | null = null
+  let dbError = null
+
   try {
-    const { Pool } = await import('pg')
-    const testPool = new Pool({
-      host:     process.env.DATABASE_HOST,
+    const pool = new Pool({
+      host: process.env.DATABASE_HOST,
       database: process.env.DATABASE_NAME,
-      user:     process.env.DATABASE_USER,
+      user: process.env.DATABASE_USER,
       password: process.env.DATABASE_PASSWORD,
-      port:     Number(process.env.DATABASE_PORT) || 5432,
+      port: Number(process.env.DATABASE_PORT) || 5432,
       ssl: { rejectUnauthorized: false },
       connectionTimeoutMillis: 5000,
     })
-    await testPool.query('SELECT 1')
+    await pool.query('SELECT 1')
     dbConnected = true
-    await testPool.end()
-  } catch (err: unknown) {
-    dbError = err instanceof Error ? err.message : String(err)
+    await pool.end()
+  } catch (err: any) {
+    dbError = err.message
   }
 
-  res.status(200).json({ checks, dbConnected, dbError })
+  res.status(200).json({
+    timestamp: new Date().toISOString(),
+    envVars,
+    dbConnected,
+    dbError
+  })
 }
