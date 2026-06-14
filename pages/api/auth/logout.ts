@@ -1,12 +1,22 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createApiSupabaseClient } from '@/lib/supabaseServer'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  try {
-    const supabase = createApiSupabaseClient(req, res)
-    await supabase.auth.signOut()
-  } catch (err) {
-    console.error('[logout]', err)
-  }
-  res.redirect(302, '/')
+  const supabaseRef = process.env.NEXT_PUBLIC_SUPABASE_URL?.split('//')[1]?.split('.')[0] ?? ''
+
+  const cookiesToClear = [
+    'sb-access-token',
+    'sb-refresh-token',
+    `sb-${supabaseRef}-auth-token`,
+    `sb-${supabaseRef}-auth-token.0`,
+    `sb-${supabaseRef}-auth-token.1`,
+    'supabase-auth-token',
+  ]
+
+  const expiredCookies = cookiesToClear.map(
+    name => `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly; SameSite=Lax`
+  )
+
+  res.setHeader('Set-Cookie', expiredCookies)
+  res.writeHead(302, { Location: '/' })
+  res.end()
 }
