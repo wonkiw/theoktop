@@ -7,6 +7,21 @@ frontend:
         - nvm use 20
         - node -v
         - npm ci
+        - echo "DATABASE_HOST=$DATABASE_HOST" >> .env.production
+        - echo "DATABASE_NAME=$DATABASE_NAME" >> .env.production
+        - echo "DATABASE_USER=$DATABASE_USER" >> .env.production
+        - echo "DATABASE_PASSWORD=$DATABASE_PASSWORD" >> .env.production
+        - echo "DATABASE_PORT=$DATABASE_PORT" >> .env.production
+        - echo "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" >> .env.production
+        - echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY" >> .env.production
+        - echo "SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY" >> .env.production
+        - echo "RESEND_API_KEY=$RESEND_API_KEY" >> .env.production
+        - echo "RESEND_FROM_EMAIL=$RESEND_FROM_EMAIL" >> .env.production
+        - echo "S3_ACCESS_KEY_ID=$S3_ACCESS_KEY_ID" >> .env.production
+        - echo "S3_SECRET_ACCESS_KEY=$S3_SECRET_ACCESS_KEY" >> .env.production
+        - echo "S3_BUCKET=$S3_BUCKET" >> .env.production
+        - echo "S3_REGION=$S3_REGION" >> .env.production
+        - echo "NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL" >> .env.production
     build:
       commands:
         - npm run build
