@@ -94,33 +94,35 @@ export default function InquiriesIndex({ inquiries }: { inquiries: InquiryItem[]
 }
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const supabase = createSSRSupabaseClient(ctx)
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
-    return { redirect: { destination: '/login?redirect=/mypage/inquiries', permanent: false } }
-  }
-
-  const client = await getPool().connect()
   try {
-    const { rows: userRows } = await client.query(
-      'SELECT id FROM users WHERE supabase_uid = $1',
-      [session.user.id]
-    )
-    if (!userRows.length) return { redirect: { destination: '/login', permanent: false } }
+    const supabase = createSSRSupabaseClient(ctx)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) {
+      return { redirect: { destination: '/login?redirect=/mypage/inquiries', permanent: false } }
+    }
 
-    const { rows } = await client.query(
-      `SELECT id, title, inquiry_type, building_address, status, created_at
-       FROM inquiries
-       WHERE user_id = $1
-       ORDER BY created_at DESC`,
-      [userRows[0].id]
-    )
-    return { props: { inquiries: JSON.parse(JSON.stringify(rows)) } }
+    const client = await getPool().connect()
+    try {
+      const { rows: userRows } = await client.query(
+        'SELECT id FROM users WHERE supabase_uid = $1',
+        [session.user.id]
+      )
+      if (!userRows.length) return { redirect: { destination: '/login', permanent: false } }
+
+      const { rows } = await client.query(
+        `SELECT id, title, inquiry_type, building_address, status, created_at
+         FROM inquiries
+         WHERE user_id = $1
+         ORDER BY created_at DESC`,
+        [userRows[0].id]
+      )
+      return { props: { inquiries: JSON.parse(JSON.stringify(rows)) } }
+    } finally {
+      client.release()
+    }
   } catch (err) {
-    console.error('[mypage/inquiries]', err)
+    console.error('[mypage/inquiries] getServerSideProps error:', err)
     return { props: { inquiries: [] } }
-  } finally {
-    client.release()
   }
 }
 

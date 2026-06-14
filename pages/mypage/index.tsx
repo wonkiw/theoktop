@@ -560,29 +560,34 @@ const s: Record<string, React.CSSProperties> = {
 }
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
-  const supabase = createSSRSupabaseClient(ctx)
-  const { data: { session } } = await supabase.auth.getSession()
-
-  if (!session) {
-    return { redirect: { destination: '/login?redirect=/mypage', permanent: false } }
-  }
-
-  const client = await getPool().connect()
   try {
-    const { rows } = await client.query(
-      'SELECT role FROM users WHERE supabase_uid = $1',
-      [session.user.id]
-    )
-    if (!rows.length) {
-      return { redirect: { destination: '/login', permanent: false } }
-    }
-    const role = rows[0].role as string
-    if (role === 'admin' || role === 'superadmin') {
-      return { redirect: { destination: '/admin/dashboard', permanent: false } }
-    }
-  } finally {
-    client.release()
-  }
+    const supabase = createSSRSupabaseClient(ctx)
+    const { data: { session } } = await supabase.auth.getSession()
 
-  return { props: {} }
+    if (!session) {
+      return { redirect: { destination: '/login?redirect=/mypage', permanent: false } }
+    }
+
+    const client = await getPool().connect()
+    try {
+      const { rows } = await client.query(
+        'SELECT role FROM users WHERE supabase_uid = $1',
+        [session.user.id]
+      )
+      if (!rows.length) {
+        return { redirect: { destination: '/login', permanent: false } }
+      }
+      const role = rows[0].role as string
+      if (role === 'admin' || role === 'superadmin') {
+        return { redirect: { destination: '/admin/dashboard', permanent: false } }
+      }
+    } finally {
+      client.release()
+    }
+
+    return { props: {} }
+  } catch (err) {
+    console.error('[mypage] getServerSideProps error:', err)
+    return { props: {} }
+  }
 }

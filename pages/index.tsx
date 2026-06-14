@@ -3,7 +3,11 @@ import { createSSRSupabaseClient } from '../lib/supabaseServer'
 import { getPool } from '../lib/db'
 
 export default function Home() {
-  return null
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: '#f7f8fa' }}>
+      <p style={{ color: '#999', fontSize: 14, fontFamily: 'sans-serif' }}>이동 중...</p>
+    </div>
+  )
 }
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {

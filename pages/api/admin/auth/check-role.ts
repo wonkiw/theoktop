@@ -33,6 +33,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { role, name } = rows[0]
     return res.status(200).json({ success: true, role, name })
+  } catch (err) {
+    console.error('[admin/auth/check-role]', err)
+    return res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' })
   } finally {
     client.release()
   }

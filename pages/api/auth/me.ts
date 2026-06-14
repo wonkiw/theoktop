@@ -18,6 +18,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     )
     if (!rows.length) return res.status(401).json({ error: 'User not found' })
     return res.status(200).json(rows[0])
+  } catch (err) {
+    console.error('[api/auth/me]', err)
+    return res.status(500).json({ error: 'Server error' })
   } finally {
     client.release()
   }

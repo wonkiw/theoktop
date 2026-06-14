@@ -11,7 +11,9 @@ export function getPool(): Pool {
       password: process.env.DATABASE_PASSWORD,
       port: Number(process.env.DATABASE_PORT) || 5432,
       ssl: { rejectUnauthorized: false },
-      connectionTimeoutMillis: 8000,
+      connectionTimeoutMillis: 10000,
+      idleTimeoutMillis: 30000,
+      max: 10,
     })
   }
   return _pool
