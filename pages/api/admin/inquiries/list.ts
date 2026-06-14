@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 import { requireAdmin } from '../../../../lib/adminAuth'
 
 /*
@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const [listRes, pendingRes] = await Promise.all([
-      pool.query(
+      getPool().query(
         `SELECT
            i.id, i.title, i.content, i.answer, i.status,
            i.created_at, i.answered_at,
@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
          ORDER BY i.created_at DESC`,
         [statusVal]
       ),
-      pool.query(`SELECT COUNT(*) FROM inquiries WHERE status = 'pending'`),
+      getPool().query(`SELECT COUNT(*) FROM inquiries WHERE status = 'pending'`),
     ])
 
     return res.status(200).json({

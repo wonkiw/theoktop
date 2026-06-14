@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabase'
+import { getSupabaseClient } from '../../lib/supabase'
 import Header from '../../components/Header'
 
 interface Inquiry {
@@ -30,7 +30,7 @@ export default function InquiryPage() {
   const [token, setToken] = useState('')
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSupabaseClient().auth.getSession().then(({ data: { session } }) => {
       if (!session) {
         router.replace('/login?redirect=/mypage/new-inquiry')
         return

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabase'
+import { getSupabaseClient } from '../../lib/supabase'
 
 /* ── Types ── */
 interface UserRow {
@@ -282,7 +282,7 @@ export default function AdminUsers() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSupabaseClient().auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.replace('/admin/login'); return }
       setToken(session.access_token)
       fetchUsers(session.access_token, '', 1)
@@ -303,7 +303,7 @@ export default function AdminUsers() {
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await getSupabaseClient().auth.signOut()
     router.replace('/admin/login')
   }
 

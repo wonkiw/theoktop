@@ -2,7 +2,7 @@ import { useRouter } from 'next/router'
 import type { GetServerSideProps } from 'next'
 import Link from 'next/link'
 import { createSSRSupabaseClient } from '../../../lib/supabaseServer'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 import Header from '../../../components/Header'
 
 interface InquiryItem {
@@ -100,7 +100,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     return { redirect: { destination: '/login?redirect=/mypage/inquiries', permanent: false } }
   }
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     const { rows: userRows } = await client.query(
       'SELECT id FROM users WHERE supabase_uid = $1',

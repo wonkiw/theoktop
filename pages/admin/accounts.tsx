@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
-import { supabase } from '../../lib/supabase'
+import { getSupabaseClient } from '../../lib/supabase'
 
 interface AdminAccount {
   id: number
@@ -64,7 +64,7 @@ export default function AdminAccountsPage() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSupabaseClient().auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.replace('/admin/login'); return }
       setToken(session.access_token)
       setCurrentEmail(session.user.email ?? '')
@@ -86,7 +86,7 @@ export default function AdminAccountsPage() {
   }, [router, loadAccounts])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await getSupabaseClient().auth.signOut()
     router.replace('/admin/login')
   }
 

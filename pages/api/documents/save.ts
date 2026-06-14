@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createApiSupabaseClient } from '../../../lib/supabaseServer'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, message: '필수 항목이 누락되었습니다.' })
   }
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     const { rows: userRows } = await client.query(
       'SELECT id FROM users WHERE supabase_uid = $1',

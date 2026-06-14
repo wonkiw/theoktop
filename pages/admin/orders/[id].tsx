@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
-import { supabase } from '../../../lib/supabase'
+import { getSupabaseClient } from '../../../lib/supabase'
 
 interface Document {
   id: number
@@ -94,7 +94,7 @@ export default function OrderDetailPage() {
   useEffect(() => {
     if (!id) return
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await getSupabaseClient().auth.getSession()
       if (!session) { router.replace('/admin/login'); return }
 
       setToken(session.access_token)
@@ -159,7 +159,7 @@ export default function OrderDetailPage() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await getSupabaseClient().auth.signOut()
     router.replace('/admin/login')
   }
 

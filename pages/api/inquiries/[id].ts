@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 import { supabaseAdmin, createApiSupabaseClient } from '../../../lib/supabaseServer'
 import { requireAdmin } from '../../../lib/adminAuth'
 
@@ -24,14 +24,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!admin) {
     const uid = await getUid(req, res)
     if (!uid) return res.status(401).json({ success: false, message: '로그인이 필요합니다.' })
-    const { rows } = await pool.query('SELECT id FROM users WHERE supabase_uid = $1', [uid])
+    const { rows } = await getPool().query('SELECT id FROM users WHERE supabase_uid = $1', [uid])
     if (!rows.length) return res.status(404).json({ success: false, message: '사용자를 찾을 수 없습니다.' })
     userId = rows[0].id
   }
 
   if (req.method === 'GET') {
     try {
-      const { rows } = await pool.query(
+      const { rows } = await getPool().query(
         `SELECT i.id, i.title, i.content, i.inquiry_type, i.building_address,
                 i.status, i.answer, i.answered_at, i.created_at, i.user_id,
                 u.name AS customer_name, u.email AS customer_email
@@ -49,7 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       let replies: unknown[] = []
       try {
-        const { rows: replyRows } = await pool.query(
+        const { rows: replyRows } = await getPool().query(
           `SELECT r.id, r.content, r.is_admin, r.file_url, r.file_name, r.created_at,
                   u.name AS author_name
            FROM inquiry_replies r
@@ -79,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!content?.trim()) return res.status(400).json({ success: false, message: '내용을 입력해주세요.' })
 
     try {
-      const { rows: inqRows } = await pool.query(
+      const { rows: inqRows } = await getPool().query(
         'SELECT user_id FROM inquiries WHERE id = $1',
         [inquiryId]
       )
@@ -91,7 +91,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const authorId = admin ? admin.id : userId
       const isAdminReply = !!admin
 
-      const { rows } = await pool.query(
+      const { rows } = await getPool().query(
         `INSERT INTO inquiry_replies (inquiry_id, user_id, content, is_admin, file_url, file_name, file_key)
          VALUES ($1, $2, $3, $4, $5, $6, $7)
          RETURNING *`,
@@ -99,7 +99,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       )
 
       if (!isAdminReply) {
-        await pool.query(
+        await getPool().query(
           `UPDATE inquiries SET status = 'reviewing' WHERE id = $1 AND status = 'pending'`,
           [inquiryId]
         )

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseAdmin, createApiSupabaseClient } from '../../../lib/supabaseServer'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { code, state } = req.query
@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   // RDS 기준으로 유저 조회 → Supabase 생성 또는 재사용
   let supabaseUid: string
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     const { rows } = await client.query(
       'SELECT supabase_uid FROM users WHERE email = $1',

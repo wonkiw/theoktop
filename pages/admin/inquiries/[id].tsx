@@ -3,8 +3,8 @@ import type { GetServerSideProps } from 'next'
 import Link from 'next/link'
 import Head from 'next/head'
 import { createSSRSupabaseClient } from '../../../lib/supabaseServer'
-import { pool } from '../../../lib/db'
-import { supabase } from '../../../lib/supabase'
+import { getPool } from '../../../lib/db'
+import { getSupabaseClient } from '../../../lib/supabase'
 
 interface Inquiry {
   id: number
@@ -81,7 +81,7 @@ export default function AdminInquiryDetail({
   }
 
   const getToken = async () => {
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
     return session?.access_token ?? ''
   }
 
@@ -384,7 +384,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const inquiryId = Number(ctx.params?.id)
   if (isNaN(inquiryId)) return { notFound: true }
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     const { rows: userRows } = await client.query(
       'SELECT id, role FROM users WHERE supabase_uid = $1',

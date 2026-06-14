@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseAdmin } from '../../../lib/supabaseServer'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -36,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const supabaseUid = data.user.id
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     await client.query(
       `INSERT INTO users (supabase_uid, email, name, role, provider)

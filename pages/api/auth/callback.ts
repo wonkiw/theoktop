@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createServerClient } from '@supabase/auth-helpers-nextjs'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 
 function buildSetCookieHeader(name: string, value: string, options: Record<string, unknown>): string {
   let cookie = `${name}=${value}`
@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const name = user_metadata?.full_name ?? user_metadata?.name ?? email
   const provider = app_metadata?.provider ?? 'email'
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     const { rows } = await client.query(
       'SELECT id FROM users WHERE supabase_uid = $1',

@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 import { requireAdmin } from '../../../../lib/adminAuth'
 
 const VALID_STATUSES = ['pending', 'reviewing', 'completed']
@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'GET') {
     try {
-      const { rows } = await pool.query(
+      const { rows } = await getPool().query(
         `SELECT i.id, i.title, i.content, i.inquiry_type, i.building_address,
                 i.status, i.answer, i.answered_at, i.created_at,
                 u.name AS customer_name, u.email AS customer_email, u.phone AS customer_phone
@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       let replies: unknown[] = []
       try {
-        const { rows: replyRows } = await pool.query(
+        const { rows: replyRows } = await getPool().query(
           `SELECT r.id, r.content, r.is_admin, r.file_url, r.file_name, r.created_at,
                   u.name AS author_name
            FROM inquiry_replies r
@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      await pool.query(
+      await getPool().query(
         'UPDATE inquiries SET status = $2 WHERE id = $1',
         [inquiryId, status]
       )

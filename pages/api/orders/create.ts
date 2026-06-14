@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createApiSupabaseClient } from '../../../lib/supabaseServer'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, message: '건물 주소는 필수입니다.' })
   }
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     // supabase_uid → users.id 조회
     const { rows: userRows } = await client.query(

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { supabaseAdmin } from '../../../../lib/supabaseServer'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ success: false, message: '유효하지 않은 토큰입니다.' })
   }
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     const { rows } = await client.query(
       'SELECT role, name FROM users WHERE supabase_uid = $1',

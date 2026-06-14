@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
-import { supabase } from '../../../lib/supabase'
+import { getSupabaseClient } from '../../../lib/supabase'
 
 interface Inquiry {
   id: number
@@ -213,7 +213,7 @@ export default function AdminInquiries() {
   }, [])
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSupabaseClient().auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.replace('/admin/login'); return }
       setToken(session.access_token)
       fetchList(session.access_token, tab)
@@ -233,7 +233,7 @@ export default function AdminInquiries() {
   }
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await getSupabaseClient().auth.signOut()
     router.replace('/admin/login')
   }
 

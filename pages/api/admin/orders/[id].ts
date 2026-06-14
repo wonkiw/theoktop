@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 import { requireAdmin } from '../../../../lib/adminAuth'
 import {
   getViewPresignedUrl,
@@ -17,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // ── GET: 상세 조회 ────────────────────────────────────────────
   if (req.method === 'GET') {
     try {
-      const { rows } = await pool.query(
+      const { rows } = await getPool().query(
         `SELECT
            o.id, o.building_address, o.building_detail, o.order_type,
            o.description, o.status, o.created_at, o.updated_at,
@@ -89,7 +89,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (sets.length === 1) return res.status(400).json({ success: false, message: '변경할 항목이 없습니다.' })
 
     try {
-      await pool.query(`UPDATE orders SET ${sets.join(', ')} WHERE id = $1`, params)
+      await getPool().query(`UPDATE orders SET ${sets.join(', ')} WHERE id = $1`, params)
       return res.status(200).json({ success: true })
     } catch (err) {
       console.error('[admin/orders/[id] PATCH]', err)

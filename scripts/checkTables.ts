@@ -2,7 +2,7 @@
  * RDS theoktop DB 테이블 확인 스크립트
  * 실행: npx ts-node -P tsconfig.json scripts/checkTables.ts
  */
-import { pool } from '../lib/db'
+import { getPool } from '../lib/db'
 import type { PoolClient } from 'pg'
 
 const TABLES = ['inquiries', 'inquiry_replies'] as const
@@ -70,7 +70,7 @@ async function columnExists(client: PoolClient, table: string, column: string): 
 
 async function main() {
   console.log('=== theoktop DB 테이블 확인 ===\n')
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     for (const table of TABLES) {
       const exists = await tableExists(client, table)
@@ -98,7 +98,7 @@ async function main() {
     console.log('\n모든 테이블·컬럼 확인 완료.')
   } finally {
     client.release()
-    await pool.end()
+    await getPool().end()
   }
 }
 

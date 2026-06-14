@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createApiSupabaseClient } from '../../../lib/supabaseServer'
 import { getDownloadPresignedUrl, extractKeyFromUrl } from '../../../lib/s3'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ success: false, message: 'documentId가 필요합니다.' })
   }
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     // 본인 소유 문서인지 확인
     const { rows } = await client.query(

@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 import { supabaseAdmin } from '../../../../lib/supabaseServer'
 import { requireAdmin } from '../../../../lib/adminAuth'
 
@@ -19,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT supabase_uid, role FROM users WHERE id = $1 AND role IN ('admin', 'superadmin')`,
       [user_id]
     )
@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // RDS 역할 업데이트
-    await pool.query(
+    await getPool().query(
       `UPDATE users SET role = 'deactivated' WHERE id = $1`,
       [user_id]
     )

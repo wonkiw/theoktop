@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 import { supabaseAdmin } from '../../../../lib/supabaseServer'
 import { requireAdmin } from '../../../../lib/adminAuth'
 
@@ -11,7 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (admin.role !== 'superadmin') return res.status(403).json({ success: false, message: '슈퍼관리자 권한이 필요합니다.' })
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT id, supabase_uid, name, email, role, created_at
        FROM users
        WHERE role IN ('admin', 'superadmin')

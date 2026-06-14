@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 import { requireAdmin } from '../../../../lib/adminAuth'
 import { sendEmail, orderFeedbackTemplate } from '../../../../lib/email'
 
@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `SELECT o.building_address, u.name AS customer_name, u.email AS customer_email
        FROM orders o
        JOIN users u ON u.id = o.user_id
@@ -38,7 +38,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const { building_address, customer_name, customer_email } = rows[0]
 
     // 피드백 이력 저장
-    await pool.query(
+    await getPool().query(
       `INSERT INTO order_feedbacks (order_id, admin_user_id, content, sent_at)
        VALUES ($1, $2, $3, NOW())`,
       [order_id, admin.id, content]

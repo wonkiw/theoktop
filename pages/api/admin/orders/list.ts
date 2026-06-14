@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 import { requireAdmin } from '../../../../lib/adminAuth'
 
 const PAGE_SIZE = 20
@@ -23,14 +23,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const [countRes, dataRes] = await Promise.all([
-      pool.query(
+      getPool().query(
         `SELECT COUNT(*)
          FROM orders o
          JOIN users u ON u.id = o.user_id
          ${where}`,
         [statusVal, searchVal]
       ),
-      pool.query(
+      getPool().query(
         `SELECT
            o.id,
            o.building_address,

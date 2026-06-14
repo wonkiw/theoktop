@@ -2,9 +2,9 @@ import { useEffect, useState, useMemo } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import type { GetServerSideProps } from 'next'
-import { supabase } from '../../lib/supabase'
+import { getSupabaseClient } from '../../lib/supabase'
 import { createSSRSupabaseClient } from '../../lib/supabaseServer'
-import { pool } from '../../lib/db'
+import { getPool } from '../../lib/db'
 import Header from '../../components/Header'
 
 type Document = {
@@ -73,7 +73,7 @@ export default function MyPage() {
   const [userName, setUserName]  = useState('')
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    getSupabaseClient().auth.getSession().then(({ data: { session } }) => {
       if (!session) return // getServerSideProps에서 처리
       setToken(session.access_token)
       const name =
@@ -567,7 +567,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     return { redirect: { destination: '/login?redirect=/mypage', permanent: false } }
   }
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     const { rows } = await client.query(
       'SELECT role FROM users WHERE supabase_uid = $1',

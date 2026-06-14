@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 import { supabaseAdmin } from '../../../../lib/supabaseServer'
 import { requireAdmin } from '../../../../lib/adminAuth'
 import { sendEmail, newAdminTemplate } from '../../../../lib/email'
@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // 이메일 중복 확인
-  const { rows: existing } = await pool.query(
+  const { rows: existing } = await getPool().query(
     'SELECT id FROM users WHERE email = $1',
     [email.trim().toLowerCase()]
   )
@@ -42,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // RDS에 사용자 등록
-    await pool.query(
+    await getPool().query(
       `INSERT INTO users (supabase_uid, name, email, role, provider, created_at)
        VALUES ($1, $2, $3, $4, 'email', NOW())`,
       [authData.user.id, name.trim(), email.trim().toLowerCase(), role]

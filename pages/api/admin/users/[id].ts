@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 import { requireAdmin } from '../../../../lib/adminAuth'
 import { getViewPresignedUrl, getDownloadPresignedUrl, extractKeyFromUrl } from '../../../../lib/s3'
 
@@ -14,19 +14,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const [userRes, ordersRes, docsRes] = await Promise.all([
-      pool.query(
+      getPool().query(
         `SELECT id, name, email, phone, provider, role, created_at
          FROM users WHERE id = $1`,
         [userId]
       ),
-      pool.query(
+      getPool().query(
         `SELECT id, building_address, order_type, status, created_at
          FROM orders
          WHERE user_id = $1
          ORDER BY created_at DESC`,
         [userId]
       ),
-      pool.query(
+      getPool().query(
         `SELECT d.id, d.file_name, d.file_url, d.file_type, d.order_id
          FROM documents d
          WHERE d.user_id = $1

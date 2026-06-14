@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 import { requireAdmin } from '../../../../lib/adminAuth'
 
 const PAGE_SIZE = 30
@@ -19,11 +19,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const where = `WHERE u.role = 'user' AND ($1::text IS NULL OR u.name ILIKE $1 OR u.email ILIKE $1)`
 
     const [countRes, listRes] = await Promise.all([
-      pool.query(
+      getPool().query(
         `SELECT COUNT(*) FROM users u ${where}`,
         [searchVal]
       ),
-      pool.query(
+      getPool().query(
         `SELECT
            u.id, u.name, u.email, u.phone, u.provider, u.role, u.created_at,
            COUNT(o.id)::int AS order_count

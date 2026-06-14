@@ -2,9 +2,9 @@ import { useState, useRef } from 'react'
 import type { GetServerSideProps } from 'next'
 import Link from 'next/link'
 import { createSSRSupabaseClient } from '../../../lib/supabaseServer'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 import Header from '../../../components/Header'
-import { supabase } from '../../../lib/supabase'
+import { getSupabaseClient } from '../../../lib/supabase'
 
 interface Inquiry {
   id: number
@@ -69,7 +69,7 @@ export default function InquiryDetail({
     setSuccess('')
 
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await getSupabaseClient().auth.getSession()
       if (!session) { setError('로그인이 필요합니다.'); setSubmitting(false); return }
 
       let fileUrl: string | undefined
@@ -234,7 +234,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const inquiryId = Number(ctx.params?.id)
   if (isNaN(inquiryId)) return { notFound: true }
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     const { rows: userRows } = await client.query(
       'SELECT id FROM users WHERE supabase_uid = $1',

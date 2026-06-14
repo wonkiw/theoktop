@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import Head from 'next/head'
-import { supabase } from '../../lib/supabase'
+import { getSupabaseClient } from '../../lib/supabase'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_SECONDS = 30
@@ -13,7 +13,7 @@ export default function AdminLoginPage() {
 
   // 이미 로그인된 관리자는 대시보드로
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    getSupabaseClient().auth.getSession().then(async ({ data: { session } }) => {
       if (!session) return
       const res = await fetch('/api/admin/auth/check-role', {
         method: 'POST',
@@ -57,7 +57,7 @@ export default function AdminLoginPage() {
 
     setLoading(true)
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error: authError } = await getSupabaseClient().auth.signInWithPassword({ email, password })
 
       if (authError || !data.session) {
         const newAttempts = attempts + 1
@@ -83,7 +83,7 @@ export default function AdminLoginPage() {
       const json = await res.json()
 
       if (!json.success) {
-        await supabase.auth.signOut()
+        await getSupabaseClient().auth.signOut()
         setError('사용자 정보를 확인할 수 없습니다.')
         setLoading(false)
         return
@@ -102,7 +102,7 @@ export default function AdminLoginPage() {
         // window.location 으로 전체 페이지 로드 → 미들웨어가 쿠키를 읽을 수 있음
         window.location.href = '/admin/dashboard'
       } else {
-        await supabase.auth.signOut()
+        await getSupabaseClient().auth.signOut()
         setError('관리자 권한이 없습니다.')
       }
     } catch {

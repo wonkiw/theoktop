@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabase'
+import { getSupabaseClient } from '../../lib/supabase'
 
 interface Stats {
   todayOrders: number
@@ -83,7 +83,7 @@ export default function AdminDashboard() {
     let cancelled = false
 
     async function init() {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session } } = await getSupabaseClient().auth.getSession()
       if (!session) {
         router.replace('/admin/login')
         return
@@ -131,7 +131,7 @@ export default function AdminDashboard() {
   }, [router])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await getSupabaseClient().auth.signOut()
     router.replace('/admin/login')
   }
 

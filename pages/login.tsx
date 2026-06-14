@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
-import { supabase } from '../lib/supabase'
+import { getSupabaseClient } from '../lib/supabase'
 
 const ERROR_MAP: Record<string, string> = {
   'Invalid login credentials':   '이메일 또는 비밀번호가 올바르지 않습니다.',
@@ -34,7 +34,7 @@ export default function LoginPage() {
 
   // 이미 로그인된 경우(localStorage 세션 있지만 쿠키 없어서 미들웨어가 여기로 리다이렉트한 경우)
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    getSupabaseClient().auth.getSession().then(async ({ data: { session } }) => {
       if (!session) { setChecking(false); return }
       try {
         await fetch('/api/auth/sync-session', {
@@ -67,7 +67,7 @@ export default function LoginPage() {
 
     setLoading(true)
     try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
+      const { data, error: authError } = await getSupabaseClient().auth.signInWithPassword({ email, password })
       if (authError) {
         setError(localizeError(authError.message))
       } else {
@@ -92,13 +92,13 @@ export default function LoginPage() {
   }
 
   const handleGoogle = () =>
-    supabase.auth.signInWithOAuth({
+    getSupabaseClient().auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback` },
     })
 
   const handleKakao = () =>
-    supabase.auth.signInWithOAuth({
+    getSupabaseClient().auth.signInWithOAuth({
       provider: 'kakao',
       options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback` },
     })

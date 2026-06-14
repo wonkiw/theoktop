@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Head from 'next/head'
 import Link from 'next/link'
-import { supabase } from '../lib/supabase'
+import { getSupabaseClient } from '../lib/supabase'
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ email: '', password: '', passwordConfirm: '', name: '' })
@@ -57,13 +57,13 @@ export default function RegisterPage() {
   }
 
   const handleGoogle = () =>
-    supabase.auth.signInWithOAuth({
+    getSupabaseClient().auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback` },
     })
 
   const handleKakao = () =>
-    supabase.auth.signInWithOAuth({
+    getSupabaseClient().auth.signInWithOAuth({
       provider: 'kakao',
       options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/api/auth/callback` },
     })

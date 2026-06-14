@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 import { requireAdmin } from '../../../lib/adminAuth'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -14,14 +14,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const safeCount = (rows: { count: string }[]) => Number(rows[0]?.count ?? 0)
 
     const [todayRes, pendingRes, inquiryRes, usersRes] = await Promise.all([
-      pool.query(`
+      getPool().query(`
         SELECT COUNT(*) FROM orders
         WHERE created_at >= CURRENT_DATE AND created_at < CURRENT_DATE + INTERVAL '1 day'
       `),
-      pool.query(`SELECT COUNT(*) FROM orders WHERE status = 'pending'`),
-      pool.query(`SELECT COUNT(*) FROM inquiries WHERE status = 'pending'`)
+      getPool().query(`SELECT COUNT(*) FROM orders WHERE status = 'pending'`),
+      getPool().query(`SELECT COUNT(*) FROM inquiries WHERE status = 'pending'`)
         .catch(() => ({ rows: [{ count: '0' }] })),
-      pool.query(`SELECT COUNT(*) FROM users WHERE role = 'user'`),
+      getPool().query(`SELECT COUNT(*) FROM users WHERE role = 'user'`),
     ])
 
     return res.status(200).json({

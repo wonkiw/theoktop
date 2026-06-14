@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
-import { supabase } from '../lib/supabase'
+import { getSupabaseClient } from '../lib/supabase'
 import styles from '../styles/Header.module.css'
 
 export default function Header() {
@@ -27,14 +27,14 @@ export default function Header() {
   }
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    getSupabaseClient().auth.getUser().then(({ data }) => {
       const u = data.user ?? null
       setUser(u)
       if (u) fetchRole()
       setReady(true)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+    const { data: { subscription } } = getSupabaseClient().auth.onAuthStateChange((_, session) => {
       const u = session?.user ?? null
       setUser(u)
       if (u) {
@@ -55,7 +55,7 @@ export default function Header() {
   }, [router.events])
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await getSupabaseClient().auth.signOut()
     setRole(null)
     setMenuOpen(false)
     router.push('/')

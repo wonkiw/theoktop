@@ -1,4 +1,4 @@
-import { pool } from '../lib/db'
+import { getPool } from '../lib/db'
 
 const tables: { sql: string; name: string }[] = [
   {
@@ -52,7 +52,7 @@ const tables: { sql: string; name: string }[] = [
 ]
 
 async function initDB() {
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     for (const table of tables) {
       await client.query(table.sql)
@@ -64,7 +64,7 @@ async function initDB() {
     process.exit(1)
   } finally {
     client.release()
-    await pool.end()
+    await getPool().end()
   }
 }
 

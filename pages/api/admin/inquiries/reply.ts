@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { pool } from '../../../../lib/db'
+import { getPool } from '../../../../lib/db'
 import { requireAdmin } from '../../../../lib/adminAuth'
 import { sendEmail, inquiryReplyTemplate } from '../../../../lib/email'
 
@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { rows } = await pool.query(
+    const { rows } = await getPool().query(
       `UPDATE inquiries
        SET answer = $2, status = 'answered', answered_at = NOW(), answered_by = $3
        WHERE id = $1 AND status = 'pending'
@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { title, user_id } = rows[0]
 
-    const { rows: userRows } = await pool.query(
+    const { rows: userRows } = await getPool().query(
       'SELECT name, email FROM users WHERE id = $1',
       [user_id]
     )

@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createApiSupabaseClient, supabaseAdmin } from '../../../lib/supabaseServer'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 
 async function getSupabaseUid(req: NextApiRequest, res: NextApiResponse): Promise<string | null> {
   // Bearer 토큰 우선
@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'GET') {
-    const client = await pool.connect()
+    const client = await getPool().connect()
     try {
       const { rows } = await client.query(
         `SELECT name, email, phone, role, provider, created_at
@@ -48,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ success: false, message: '이름은 필수입니다.' })
     }
 
-    const client = await pool.connect()
+    const client = await getPool().connect()
     try {
       const { rows } = await client.query(
         `UPDATE users SET name = $2, phone = $3, updated_at = NOW()

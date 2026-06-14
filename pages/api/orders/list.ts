@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createApiSupabaseClient, supabaseAdmin } from '../../../lib/supabaseServer'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 
 async function getUid(req: NextApiRequest, res: NextApiResponse): Promise<string | null> {
   const token = req.headers.authorization?.replace('Bearer ', '')
@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ success: false, message: '로그인이 필요합니다.' })
   }
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     let { rows: userRows } = await client.query(
       'SELECT id FROM users WHERE supabase_uid = $1',

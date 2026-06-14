@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { createApiSupabaseClient } from '../../../lib/supabaseServer'
-import { pool } from '../../../lib/db'
+import { getPool } from '../../../lib/db'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).end()
@@ -10,7 +10,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (!session) return res.status(401).json({ error: 'Unauthorized' })
 
-  const client = await pool.connect()
+  const client = await getPool().connect()
   try {
     const { rows } = await client.query(
       'SELECT id, email, name, role, supabase_uid FROM users WHERE supabase_uid = $1',

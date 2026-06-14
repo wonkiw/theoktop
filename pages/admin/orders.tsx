@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabase'
+import { getSupabaseClient } from '../../lib/supabase'
 
 interface Order {
   id: number
@@ -57,7 +57,7 @@ export default function AdminOrders() {
 
   const fetchOrders = useCallback(async (pg: number, status: string, q: string) => {
     setLoading(true)
-    const { data: { session } } = await supabase.auth.getSession()
+    const { data: { session } } = await getSupabaseClient().auth.getSession()
     if (!session) { router.replace('/admin/login'); return }
 
     const params = new URLSearchParams({ page: String(pg), status })
@@ -95,7 +95,7 @@ export default function AdminOrders() {
   const totalPages = Math.ceil(total / PAGE_SIZE)
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
+    await getSupabaseClient().auth.signOut()
     router.replace('/admin/login')
   }
 
