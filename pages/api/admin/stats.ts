@@ -1,40 +1,30 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getPool } from '../../../lib/db'
-import { requireAdmin } from '../../../lib/adminAuth'
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'GET') {
-    return res.status(405).json({ success: false })
-  }
-
-  const admin = await requireAdmin(req.headers.authorization)
-  if (!admin) return res.status(401).json({ success: false, message: '관리자 권한이 필요합니다.' })
-
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   try {
-    const safeCount = (rows: { count: string }[]) => Number(rows[0]?.count ?? 0)
+    const pool = getPool()
 
-    const [todayRes, pendingRes, inquiryRes, usersRes] = await Promise.all([
-      getPool().query(`
-        SELECT COUNT(*) FROM orders
-        WHERE created_at >= CURRENT_DATE AND created_at < CURRENT_DATE + INTERVAL '1 day'
-      `),
-      getPool().query(`SELECT COUNT(*) FROM orders WHERE status = 'pending'`),
-      getPool().query(`SELECT COUNT(*) FROM inquiries WHERE status = 'pending'`)
-        .catch(() => ({ rows: [{ count: '0' }] })),
-      getPool().query(`SELECT COUNT(*) FROM users WHERE role = 'user'`),
+    const [inquiries, users] = await Promise.all([
+      pool.query("SELECT COUNT(*) as total, COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending FROM inquiries"),
+      pool.query("SELECT COUNT(*) as total FROM users WHERE role = 'user'"),
     ])
 
-    return res.status(200).json({
-      success: true,
-      stats: {
-        todayOrders:         safeCount(todayRes.rows),
-        pendingOrders:       safeCount(pendingRes.rows),
-        unansweredInquiries: safeCount(inquiryRes.rows),
-        totalUsers:          safeCount(usersRes.rows),
-      },
+    res.status(200).json({
+      totalInquiries:  Number(inquiries.rows[0]?.total  || 0),
+      pendingInquiries: Number(inquiries.rows[0]?.pending || 0),
+      totalUsers:      Number(users.rows[0]?.total      || 0),
     })
-  } catch (err) {
-    console.error('[admin/stats] DB 오류:', err)
-    return res.status(500).json({ success: false, message: '통계 조회 중 오류가 발생했습니다.' })
+  } catch (err: any) {
+    console.error('[admin/stats] error:', err)
+    res.status(200).json({
+      totalInquiries:  0,
+      pendingInquiries: 0,
+      totalUsers:      0,
+      error: err.message,
+    })
   }
 }

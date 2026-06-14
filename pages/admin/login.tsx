@@ -1,11 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
 import Head from 'next/head'
+import { useRouter } from 'next/router'
+import type { GetServerSideProps } from 'next'
 import { getSupabaseClient } from '../../lib/supabase'
+import { createSSRSupabaseClient } from '../../lib/supabaseServer'
+import { getPool } from '../../lib/db'
 
 const MAX_ATTEMPTS = 5
 const LOCKOUT_SECONDS = 30
 
 export default function AdminLoginPage() {
+  const router = useRouter()
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
@@ -21,7 +26,7 @@ export default function AdminLoginPage() {
       })
       const json = await res.json()
       if (json.role === 'admin' || json.role === 'superadmin') {
-        window.location.href = '/admin/dashboard'
+        void router.push('/admin/dashboard')
       }
     })
   }, [])
@@ -99,8 +104,7 @@ export default function AdminLoginPage() {
             refresh_token: data.session.refresh_token,
           }),
         })
-        // window.location 으로 전체 페이지 로드 → 미들웨어가 쿠키를 읽을 수 있음
-        window.location.href = '/admin/dashboard'
+        void router.push('/admin/dashboard')
       } else {
         await getSupabaseClient().auth.signOut()
         setError('관리자 권한이 없습니다.')
@@ -186,6 +190,30 @@ export default function AdminLoginPage() {
       </div>
     </>
   )
+}
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  try {
+    const supabase = createSSRSupabaseClient(ctx)
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) return { props: {} }
+    const client = await getPool().connect()
+    try {
+      const { rows } = await client.query(
+        "SELECT role FROM users WHERE supabase_uid = $1",
+        [session.user.id]
+      )
+      const role = rows[0]?.role
+      if (role === 'admin' || role === 'superadmin') {
+        return { redirect: { destination: '/admin/dashboard', permanent: false } }
+      }
+    } finally {
+      client.release()
+    }
+  } catch (err) {
+    console.error('[admin/login] getServerSideProps error:', err)
+  }
+  return { props: {} }
 }
 
 const s: Record<string, React.CSSProperties> = {
