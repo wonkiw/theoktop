@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
-import { supabase } from '../../lib/supabase'
+import { supabase } from '../../../lib/supabase'
 
 interface Inquiry {
   id: number
@@ -89,7 +89,6 @@ function InquiryModal({
     setSending(false)
   }
 
-  // ESC 닫기
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', handler)
@@ -98,15 +97,12 @@ function InquiryModal({
 
   return (
     <>
-      {/* Overlay */}
       <div
         onClick={onClose}
         style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.45)', zIndex: 1000 }}
       />
 
-      {/* Panel */}
       <div style={ms.panel}>
-        {/* Modal header */}
         <div style={ms.header}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
@@ -128,13 +124,11 @@ function InquiryModal({
         </div>
 
         <div style={ms.body}>
-          {/* 문의 원문 */}
           <section style={ms.section}>
             <p style={ms.sectionLabel}>문의 내용</p>
             <div style={ms.contentBox}>{inquiry.content}</div>
           </section>
 
-          {/* 답변 영역 */}
           <section style={ms.section}>
             <p style={ms.sectionLabel}>
               {isPending ? '답변 작성' : '등록된 답변'}
@@ -161,7 +155,6 @@ function InquiryModal({
           </section>
         </div>
 
-        {/* Footer */}
         {isPending && (
           <div style={ms.footer}>
             <p style={ms.emailNote}>
@@ -258,7 +251,6 @@ export default function AdminInquiries() {
 
       <div style={s.root}>
 
-        {/* ── 헤더 ── */}
         <header style={s.header}>
           <div style={s.headerInner}>
             <Link href="/admin/dashboard" style={s.logo}>
@@ -272,7 +264,6 @@ export default function AdminInquiries() {
 
         <main style={s.main}>
 
-          {/* ── 타이틀 ── */}
           <div style={s.titleRow}>
             <Link href="/admin/dashboard" style={s.breadcrumb}>← 대시보드</Link>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -283,7 +274,6 @@ export default function AdminInquiries() {
             </div>
           </div>
 
-          {/* ── 탭 ── */}
           <div style={s.tabBar} role="tablist">
             {TABS.map(t => (
               <button
@@ -310,7 +300,6 @@ export default function AdminInquiries() {
             ))}
           </div>
 
-          {/* ── 테이블 ── */}
           <div style={s.tableWrap}>
             <table style={s.table}>
               <thead>
@@ -381,7 +370,6 @@ export default function AdminInquiries() {
         </main>
       </div>
 
-      {/* ── 상세 모달 ── */}
       {selected && (
         <InquiryModal
           inquiry={selected}

@@ -32,7 +32,7 @@ export default function InquiryPage() {
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
-        router.replace('/login?redirect=/mypage/inquiry')
+        router.replace('/login?redirect=/mypage/new-inquiry')
         return
       }
       setToken(session.access_token)

@@ -152,8 +152,8 @@ export default function MyPage() {
             {userName && <span style={s.userBadge}>{userName} 님</span>}
           </div>
           <div style={s.titleRight}>
-            <Link href="/mypage/new-order" style={s.newBtn}>+ 새 상담 등록</Link>
-            <Link href="/mypage/inquiry"   style={s.subBtn}>문의하기</Link>
+            <Link href="/mypage/new-order"   style={s.newBtn}>+ 새 상담 등록</Link>
+            <Link href="/mypage/inquiries" style={s.subBtn}>상담 내역</Link>
           </div>
         </div>
 
@@ -321,7 +321,7 @@ export default function MyPage() {
 
         {/* 하단 바로가기 */}
         <div style={s.bottomNav}>
-          <Link href="/mypage/inquiry"   style={s.bottomLink}>💬 문의 내역</Link>
+          <Link href="/mypage/inquiries" style={s.bottomLink}>💬 상담 내역</Link>
           <Link href="/mypage/orders"    style={s.bottomLink}>📋 의뢰 현황</Link>
           <Link href="/mypage/documents" style={s.bottomLink}>📁 문서 관리</Link>
         </div>
