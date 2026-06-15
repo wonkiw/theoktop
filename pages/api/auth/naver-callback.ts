@@ -1,8 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getPool } from '../../../lib/db'
-import { getSupabaseAdmin } from '../../../lib/supabase'
+import { getPool } from '@/lib/db'
+import { getSupabaseAdmin } from '@/lib/supabase'
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
   const { code, state, error } = req.query
 
   if (error) {
@@ -16,22 +19,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const clientId = process.env.NAVER_CLIENT_ID!
     const clientSecret = process.env.NAVER_CLIENT_SECRET!
-    const redirectUri =
-      process.env.NAVER_REDIRECT_URI || 'https://theoktop.com/api/auth/naver-callback'
+    const redirectUri = process.env.NAVER_REDIRECT_URI ||
+      'https://theoktop.com/api/auth/naver-callback'
 
     // 1. 네이버 토큰 발급
     const tokenRes = await fetch(
-      `https://nid.naver.com/oauth2.0/token?` +
-        new URLSearchParams({
-          grant_type: 'authorization_code',
-          client_id: clientId,
-          client_secret: clientSecret,
-          code: String(code),
-          state: String(state),
-        }),
-      { method: 'GET' }
+      'https://nid.naver.com/oauth2.0/token?' +
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        client_id: clientId,
+        client_secret: clientSecret,
+        code: String(code),
+        state: String(state),
+      }).toString()
     )
-    const tokenData = await tokenRes.json()
+    const tokenData = await tokenRes.json() as { access_token?: string }
 
     if (!tokenData.access_token) {
       console.error('Naver token error:', tokenData)
@@ -42,32 +44,40 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const userRes = await fetch('https://openapi.naver.com/v1/nid/me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     })
-    const userData = await userRes.json()
+    const userData = await userRes.json() as {
+      response?: { email?: string; name?: string; id?: string }
+    }
     const naverUser = userData.response
 
     if (!naverUser?.email) {
       return res.redirect('/login?error=no_email')
     }
 
-    // 3. Supabase 유저 조회 또는 생성
+    // 3. Supabase에 유저 생성 또는 기존 유저 조회
     const supabaseAdmin = getSupabaseAdmin()
 
-    const { data: listData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
-    const existingUser = listData?.users?.find(u => u.email === naverUser.email)
+    const { data: listData } = await supabaseAdmin.auth.admin.listUsers({
+      perPage: 1000,
+    })
+
+    type SupabaseUser = { id: string; email?: string }
+    const users = (listData?.users ?? []) as SupabaseUser[]
+    const existingUser = users.find(u => u.email === naverUser.email)
 
     let userId: string
 
     if (existingUser) {
       userId = existingUser.id
     } else {
-      const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
-        email: naverUser.email,
-        email_confirm: true,
-        user_metadata: {
-          full_name: naverUser.name || '',
-          provider: 'naver',
-        },
-      })
+      const { data: newUser, error: createErr } =
+        await supabaseAdmin.auth.admin.createUser({
+          email: naverUser.email,
+          email_confirm: true,
+          user_metadata: {
+            full_name: naverUser.name || '',
+            provider: 'naver',
+          },
+        })
       if (createErr || !newUser.user) {
         console.error('Create user error:', createErr)
         return res.redirect('/login?error=create_failed')
@@ -86,14 +96,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     )
 
     // 5. 매직링크로 자동 로그인
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://theoktop.com'
-    const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
-      type: 'magiclink',
-      email: naverUser.email,
-      options: {
-        redirectTo: `${siteUrl}/mypage`,
-      },
-    })
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ||
+      'https://theoktop.com'
+    const { data: linkData, error: linkErr } =
+      await supabaseAdmin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: naverUser.email,
+        options: {
+          redirectTo: `${siteUrl}/api/auth/callback`,
+        },
+      })
 
     if (linkErr || !linkData?.properties?.action_link) {
       console.error('Magic link error:', linkErr)
