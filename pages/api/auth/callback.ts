@@ -23,9 +23,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.redirect('/login?error=session_failed')
     }
 
+    const { user } = data.session
+
     try {
       const pool = getPool()
-      const { user } = data.session
       const provider = user.app_metadata?.provider ?? 'oauth'
       const name =
         user.user_metadata?.full_name ??
@@ -38,8 +39,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
          VALUES ($1, $2, $3, 'user', $4)
          ON CONFLICT (supabase_uid) DO UPDATE
          SET email = EXCLUDED.email,
-             name = CASE WHEN users.name = '' THEN EXCLUDED.name ELSE users.name END,
-             updated_at = NOW()`,
+             name = CASE WHEN users.name = ''
+                         THEN EXCLUDED.name
+                         ELSE users.name END`,
         [user.id, user.email ?? '', name, provider]
       )
 
@@ -54,11 +56,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       return res.redirect('/mypage')
     } catch (dbErr) {
-      console.error('DB error in callback:', dbErr)
+      console.error('DB error:', dbErr)
       return res.redirect('/mypage')
     }
   } catch (err) {
-    console.error('callback error:', err)
+    console.error('Callback error:', err)
     return res.redirect('/login?error=server_error')
   }
 }

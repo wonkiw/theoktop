@@ -103,17 +103,21 @@ export default function LoginPage() {
   }
 
   const handleKakao = async () => {
-    const { error } = await getSupabaseClient().auth.signInWithOAuth({
-      provider: 'kakao',
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback`,
-        scopes: 'profile_nickname profile_image account_email',
-        queryParams: { prompt: 'login' },
-      },
-    })
-    if (error) {
-      console.error('카카오 로그인 오류:', error)
-      alert('카카오 로그인 오류: ' + error.message)
+    try {
+      const supabase = getSupabaseClient()
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'kakao',
+        options: {
+          redirectTo: 'https://theoktop.com/api/auth/callback',
+          scopes: 'profile_nickname profile_image account_email',
+        },
+      })
+      if (error) {
+        console.error('카카오 로그인 오류:', error)
+        alert('카카오 로그인 중 오류가 발생했습니다: ' + error.message)
+      }
+    } catch (err) {
+      console.error('카카오 로그인 예외:', err)
     }
   }
 
