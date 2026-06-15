@@ -1173,7 +1173,7 @@
     if (errEl) errEl.textContent = msg;
   }
 
-  consultForm?.addEventListener('submit', function (e) {
+  consultForm?.addEventListener('submit', async function (e) {
     e.preventDefault();
 
     /* Clear previous errors */
@@ -1207,16 +1207,40 @@
       submitBtn.disabled = true;
     }
 
-    setTimeout(function () {
-      if (submitBtn) {
-        submitBtn.classList.remove('loading');
-        submitBtn.disabled = false;
+    try {
+      /* 세션 토큰 획득 */
+      var token = null;
+      if (supabaseClient) {
+        var sessionRes = await supabaseClient.auth.getSession();
+        token = sessionRes.data.session?.access_token ?? null;
+      }
+
+      var message = document.getElementById('message')?.value.trim() || '';
+
+      var response = await fetch('/api/inquiries/create', {
+        method: 'POST',
+        headers: Object.assign(
+          { 'Content-Type': 'application/json' },
+          token ? { 'Authorization': 'Bearer ' + token } : {}
+        ),
+        body: JSON.stringify({
+          inquiry_type: typeVal?.value || '',
+          building_address: addr?.value.trim() || '',
+          content: message || '상담 신청',
+        }),
+      });
+
+      var json = await response.json();
+
+      if (!response.ok) {
+        showToast(json.error || '상담 신청 중 오류가 발생했습니다.', 'error');
+        return;
       }
 
       /* Show success modal */
-      const receiptEl = document.getElementById('receiptNo');
+      var receiptEl = document.getElementById('receiptNo');
       if (receiptEl) receiptEl.textContent = generateReceipt();
-      const overlay = document.getElementById('consultSuccessOverlay');
+      var overlay = document.getElementById('consultSuccessOverlay');
       if (overlay) {
         overlay.hidden = false;
         document.body.style.overflow = 'hidden';
@@ -1225,7 +1249,15 @@
       consultForm.reset();
       uploadedFiles = [];
       renderFileList();
-    }, 1200);
+    } catch (err) {
+      console.error('[consultForm] submit error:', err);
+      showToast('상담 신청 중 오류가 발생했습니다.', 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.classList.remove('loading');
+        submitBtn.disabled = false;
+      }
+    }
   });
 
   /* Success modal close */

@@ -48,6 +48,7 @@ const PROVIDER_LABEL: Record<string, string> = {
   google: '구글',
   kakao:  '카카오',
   naver:  '네이버',
+  oauth:  'OAuth',
 }
 
 const PROVIDER_STYLE: Record<string, { bg: string; color: string }> = {
@@ -55,6 +56,7 @@ const PROVIDER_STYLE: Record<string, { bg: string; color: string }> = {
   google: { bg: '#FCE8E6', color: '#C62828' },
   kakao:  { bg: '#FFFDE7', color: '#F57F17' },
   naver:  { bg: '#E8F5E9', color: '#2E7D32' },
+  oauth:  { bg: '#EDE7F6', color: '#4527A0' },
 }
 
 const STATUS_STYLE: Record<string, { bg: string; color: string }> = {

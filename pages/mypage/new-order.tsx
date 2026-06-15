@@ -4,6 +4,7 @@ import Link from 'next/link'
 import Header from '../../components/Header'
 import AddressSearch, { AddressInfo } from '../../components/AddressSearch'
 
+const HAS_NAVER_MAP = !!process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
 const ORDER_TYPES = ['매매', '전세', '임대', '기타']
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png']
 const MAX_BYTES = 10 * 1024 * 1024
@@ -19,7 +20,7 @@ type FileState = {
 export default function NewOrderPage() {
   const router = useRouter()
 
-  const [useManualAddress, setUseManualAddress] = useState(false)
+  const [useManualAddress, setUseManualAddress] = useState(!HAS_NAVER_MAP)
   const [addressInfo, setAddressInfo]  = useState<AddressInfo | null>(null)
   const [manualAddress, setManualAddress] = useState('')
   const [orderType, setOrderType]     = useState('')
@@ -173,7 +174,7 @@ export default function NewOrderPage() {
                 onClick={() => { setUseManualAddress(!useManualAddress); setAddressInfo(null); setManualAddress('') }}
                 style={{ fontSize: 12, color: '#888', background: 'none', border: '1px solid #ddd', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
               >
-                {useManualAddress ? '🔍 지도 검색으로' : '✏️ 직접 입력'}
+                {useManualAddress ? '지도 검색으로' : '직접 입력'}
               </button>
             </div>
             {useManualAddress ? (

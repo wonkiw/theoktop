@@ -3,30 +3,20 @@ import { getPool } from '../../../../lib/db'
 import { requireAdmin } from '../../../../lib/adminAuth'
 import { sendEmail, orderFeedbackTemplate } from '../../../../lib/email'
 
-/*
-  필요한 마이그레이션:
-  CREATE TABLE IF NOT EXISTS order_feedbacks (
-    id           SERIAL PRIMARY KEY,
-    order_id     INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    admin_user_id INTEGER NOT NULL REFERENCES users(id),
-    content      TEXT NOT NULL,
-    sent_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-  );
-*/
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).json({ success: false })
 
   const admin = await requireAdmin(req.headers.authorization)
   if (!admin) return res.status(401).json({ success: false, message: '관리자 권한이 필요합니다.' })
 
-  const { order_id, content } = req.body
+  const { order_id, content, send_email: sendEmailFlag = true } = req.body
   if (!order_id || !content?.trim()) {
     return res.status(400).json({ success: false, message: '의뢰 ID와 피드백 내용이 필요합니다.' })
   }
 
+  const pool = getPool()
   try {
-    const { rows } = await getPool().query(
+    const { rows } = await pool.query(
       `SELECT o.building_address, u.name AS customer_name, u.email AS customer_email
        FROM orders o
        JOIN users u ON u.id = o.user_id
@@ -37,20 +27,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const { building_address, customer_name, customer_email } = rows[0]
 
-    // 피드백 이력 저장
-    await getPool().query(
-      `INSERT INTO order_feedbacks (order_id, admin_user_id, content, sent_at)
-       VALUES ($1, $2, $3, NOW())`,
-      [order_id, admin.id, content]
+    await pool.query(
+      `UPDATE orders
+       SET admin_memo = CASE
+         WHEN admin_memo IS NULL OR admin_memo = '' THEN $2::text
+         ELSE admin_memo || E'\n---\n' || $2::text
+       END,
+       updated_at = NOW()
+       WHERE id = $1`,
+      [order_id, content.trim()]
     )
 
-    // 고객 이메일 발송
-    const { subject, html } = orderFeedbackTemplate(customer_name, building_address, content)
-    const emailResult = await sendEmail({ to: customer_email, subject, html })
+    let emailSent = false
+    let emailError: string | null = null
+    if (sendEmailFlag) {
+      try {
+        const { subject, html } = orderFeedbackTemplate(customer_name, building_address, content.trim())
+        const result = await sendEmail({ to: customer_email, subject, html })
+        emailSent = result.success
+        if (!result.success) emailError = '이메일 발송 실패'
+      } catch (err) {
+        console.error('[admin/orders/feedback] email error:', err)
+        emailError = err instanceof Error ? err.message : '이메일 발송 오류'
+      }
+    }
 
-    return res.status(200).json({ success: true, emailSent: emailResult.success })
+    return res.status(200).json({ success: true, emailSent, emailError })
   } catch (err) {
     console.error('[admin/orders/feedback]', err)
-    return res.status(500).json({ success: false, message: '피드백 발송 중 오류가 발생했습니다.' })
+    return res.status(500).json({ success: false, message: '피드백 저장 중 오류가 발생했습니다.' })
   }
 }

@@ -27,7 +27,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       const pool = getPool()
       const { user } = data.session
-      const provider = user.app_metadata?.provider ?? 'oauth'
+      const provider =
+        user.app_metadata?.provider ??
+        user.app_metadata?.providers?.[0] ??
+        'email'
       const name =
         user.user_metadata?.full_name ??
         user.user_metadata?.name ??

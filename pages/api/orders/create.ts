@@ -25,10 +25,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { building_address, building_detail, order_type, description } = req.body
 
-  if (!building_address) {
-    return res.status(400).json({ success: false, message: '건물 주소는 필수입니다.' })
-  }
-
   const client = await getPool().connect()
   try {
     // supabase_uid → users.id 조회
