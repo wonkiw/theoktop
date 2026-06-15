@@ -6,7 +6,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const { code, state } = req.query
 
   // CSRF 검증
-  const storedState = req.cookies['naver_oauth_state']
+  const storedState = req.cookies['naver_state']
   if (!code || !state || state !== storedState) {
     return res.redirect('/login?error=invalid_state')
   }

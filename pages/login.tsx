@@ -94,17 +94,27 @@ export default function LoginPage() {
   const handleGoogle = async () => {
     const { error } = await getSupabaseClient().auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: 'https://theoktop.com/api/auth/callback' },
+      options: { redirectTo: `${window.location.origin}/api/auth/callback` },
     })
-    if (error) console.error('구글 로그인 오류:', error)
+    if (error) {
+      console.error('구글 로그인 오류:', error)
+      alert('구글 로그인 오류: ' + error.message)
+    }
   }
 
   const handleKakao = async () => {
     const { error } = await getSupabaseClient().auth.signInWithOAuth({
       provider: 'kakao',
-      options: { redirectTo: 'https://theoktop.com/api/auth/callback' },
+      options: {
+        redirectTo: `${window.location.origin}/api/auth/callback`,
+        scopes: 'profile_nickname profile_image account_email',
+        queryParams: { prompt: 'login' },
+      },
     })
-    if (error) console.error('카카오 로그인 오류:', error)
+    if (error) {
+      console.error('카카오 로그인 오류:', error)
+      alert('카카오 로그인 오류: ' + error.message)
+    }
   }
 
   const handleNaver = () => {
