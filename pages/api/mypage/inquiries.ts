@@ -32,25 +32,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     if (req.method === 'GET') {
       const { rows } = await client.query(
-        `SELECT id, title, content, answer, status, created_at, answered_at
-         FROM inquiries
-         WHERE user_id = $1
-         ORDER BY created_at DESC`,
+        `SELECT i.id, i.title, i.building_address, i.inquiry_type,
+                i.content, i.answer, i.status,
+                i.created_at, i.answered_at,
+                COUNT(ir.id) FILTER (WHERE ir.author_role = 'admin') AS reply_count
+         FROM inquiries i
+         LEFT JOIN inquiry_replies ir ON ir.inquiry_id = i.id
+         WHERE i.user_id = $1
+         GROUP BY i.id
+         ORDER BY i.created_at DESC`,
         [userId]
       )
       return res.status(200).json({ success: true, inquiries: rows })
     }
 
     if (req.method === 'POST') {
-      const { title, content } = req.body
-      if (!title?.trim() || !content?.trim()) {
-        return res.status(400).json({ success: false, message: '제목과 내용을 입력해주세요.' })
+      const { title, content, building_address, inquiry_type } = req.body
+      if (!content?.trim()) {
+        return res.status(400).json({ success: false, message: '내용을 입력해주세요.' })
       }
       const { rows } = await client.query(
-        `INSERT INTO inquiries (user_id, title, content, status)
-         VALUES ($1, $2, $3, 'pending')
-         RETURNING id, title, content, status, created_at`,
-        [userId, title.trim(), content.trim()]
+        `INSERT INTO inquiries (user_id, title, building_address, inquiry_type, content, status)
+         VALUES ($1, $2, $3, $4, $5, 'pending')
+         RETURNING id, title, building_address, inquiry_type, content, status, created_at`,
+        [userId, title?.trim() ?? '', building_address ?? '', inquiry_type ?? '', content.trim()]
       )
       return res.status(201).json({ success: true, inquiry: rows[0] })
     }

@@ -2,21 +2,6 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { getPool } from '../../../../lib/db'
 import { requireAdmin } from '../../../../lib/adminAuth'
 
-/*
-  필요한 마이그레이션:
-  CREATE TABLE IF NOT EXISTS inquiries (
-    id          SERIAL PRIMARY KEY,
-    user_id     INTEGER NOT NULL REFERENCES users(id),
-    title       VARCHAR(255) NOT NULL,
-    content     TEXT NOT NULL,
-    answer      TEXT,
-    status      VARCHAR(20) NOT NULL DEFAULT 'pending',
-    created_at  TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    answered_at TIMESTAMP WITH TIME ZONE,
-    answered_by INTEGER REFERENCES users(id)
-  );
-*/
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ success: false })
 
@@ -30,13 +15,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const [listRes, pendingRes] = await Promise.all([
       getPool().query(
         `SELECT
-           i.id, i.title, i.content, i.answer, i.status,
-           i.created_at, i.answered_at,
+           i.*,
            u.name  AS customer_name,
-           u.email AS customer_email
+           u.email AS customer_email,
+           COUNT(ir.id) FILTER (WHERE ir.author_role = 'admin') AS reply_count
          FROM inquiries i
          JOIN users u ON u.id = i.user_id
+         LEFT JOIN inquiry_replies ir ON ir.inquiry_id = i.id
          WHERE ($1::text IS NULL OR i.status = $1)
+         GROUP BY i.id, u.name, u.email
          ORDER BY i.created_at DESC`,
         [statusVal]
       ),

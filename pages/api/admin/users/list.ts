@@ -26,8 +26,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       getPool().query(
         `SELECT
            u.id, u.name, u.email, u.phone, u.provider, u.role, u.created_at,
+           COUNT(i.id)::int AS inquiry_count,
            COUNT(o.id)::int AS order_count
          FROM users u
+         LEFT JOIN inquiries i ON i.user_id = u.id
          LEFT JOIN orders o ON o.user_id = u.id
          ${where}
          GROUP BY u.id
