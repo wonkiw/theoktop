@@ -94,7 +94,10 @@ export default function LoginPage() {
   const handleGoogle = async () => {
     const { error } = await getSupabaseClient().auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/api/auth/callback` },
+      options: {
+        redirectTo: 'https://theoktop.com/api/auth/callback',
+        skipBrowserRedirect: false,
+      },
     })
     if (error) {
       console.error('구글 로그인 오류:', error)
@@ -110,6 +113,7 @@ export default function LoginPage() {
         options: {
           redirectTo: 'https://theoktop.com/api/auth/callback',
           scopes: 'profile_nickname profile_image account_email',
+          skipBrowserRedirect: false,
         },
       })
       if (error) {

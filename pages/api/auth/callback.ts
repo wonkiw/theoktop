@@ -3,30 +3,30 @@ import { createApiSupabaseClient } from '../../../lib/supabaseServer'
 import { getPool } from '../../../lib/db'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { code, error: oauthError } = req.query
+  const { code, error: oauthError, error_description } = req.query
 
   if (oauthError) {
-    console.error('OAuth error:', oauthError)
+    console.error('OAuth error:', oauthError, error_description)
     return res.redirect(`/login?error=${oauthError}`)
   }
 
+  // code가 없으면 → 클라이언트 콜백 페이지로 (access_token이 해시로 올 때)
   if (!code) {
-    return res.redirect('/login?error=no_code')
+    return res.redirect('/auth/callback')
   }
 
   try {
     const supabase = createApiSupabaseClient(req, res)
-
     const { data, error } = await supabase.auth.exchangeCodeForSession(String(code))
+
     if (error || !data?.session) {
       console.error('exchangeCodeForSession error:', error)
       return res.redirect('/login?error=session_failed')
     }
 
-    const { user } = data.session
-
     try {
       const pool = getPool()
+      const { user } = data.session
       const provider = user.app_metadata?.provider ?? 'oauth'
       const name =
         user.user_metadata?.full_name ??
