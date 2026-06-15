@@ -107,7 +107,7 @@ export default function AdminInquiryDetail({
     setSavingStatus(false)
   }
 
-  const handleSendReply = async () => {
+  const submitReply = async (sendEmail: boolean) => {
     if (!answer.trim()) return
     setSending(true)
     try {
@@ -115,7 +115,6 @@ export default function AdminInquiryDetail({
 
       let fileUrl: string | undefined
       let fileName: string | undefined
-      let fileKey: string | undefined
 
       if (file) {
         const uploadRes = await fetch('/api/upload/presigned-url', {
@@ -134,7 +133,6 @@ export default function AdminInquiryDetail({
         })
         fileUrl  = uploadData.fileUrl
         fileName = file.name
-        fileKey  = uploadData.key
       }
 
       const res = await fetch('/api/admin/inquiries/reply', {
@@ -143,9 +141,9 @@ export default function AdminInquiryDetail({
         body: JSON.stringify({
           inquiry_id: inquiry.id,
           answer: answer.trim(),
+          send_email: sendEmail,
           file_url: fileUrl,
           file_name: fileName,
-          file_key: fileKey,
         }),
       })
       const data = await res.json()
@@ -169,12 +167,13 @@ export default function AdminInquiryDetail({
           answer: answer.trim(),
           answered_at: new Date().toISOString(),
         }))
-        showToast(
-          data.emailSent ? '답변이 발송되었습니다.' : '저장되었으나 이메일 발송에 실패했습니다.',
-          data.emailSent ? 'success' : 'error'
-        )
+        if (sendEmail) {
+          showToast(data.emailSent ? '답변 저장 + 이메일 발송 완료' : '저장됨 (이메일 발송 실패)', data.emailSent ? 'success' : 'error')
+        } else {
+          showToast('답변이 저장되었습니다.', 'success')
+        }
       } else {
-        showToast(data.message ?? '발송 실패', 'error')
+        showToast(data.message ?? '저장 실패', 'error')
       }
     } catch {
       showToast('네트워크 오류', 'error')
@@ -351,19 +350,35 @@ export default function AdminInquiryDetail({
                   {file && <span style={s.fileNameText}>{file.name}</span>}
                 </div>
                 <p style={s.emailNote}>
-                  발송 시 <strong>{inquiry.customer_email}</strong>로 이메일이 전송됩니다.
+                  이메일 발송 시 <strong>{inquiry.customer_email}</strong>로 전송됩니다.
                 </p>
-                <button
-                  onClick={handleSendReply}
-                  disabled={!answer.trim() || sending}
-                  style={{
-                    ...s.sendBtn,
-                    opacity: (!answer.trim() || sending) ? 0.5 : 1,
-                    cursor:  (!answer.trim() || sending) ? 'not-allowed' : 'pointer',
-                  }}
-                >
-                  {sending ? '발송 중...' : '답변 저장 + 이메일 발송'}
-                </button>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button
+                    onClick={() => submitReply(false)}
+                    disabled={!answer.trim() || sending}
+                    style={{
+                      ...s.sendBtn,
+                      background: '#555',
+                      flex: 1,
+                      opacity: (!answer.trim() || sending) ? 0.5 : 1,
+                      cursor:  (!answer.trim() || sending) ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {sending ? '저장 중...' : '저장만'}
+                  </button>
+                  <button
+                    onClick={() => submitReply(true)}
+                    disabled={!answer.trim() || sending}
+                    style={{
+                      ...s.sendBtn,
+                      flex: 2,
+                      opacity: (!answer.trim() || sending) ? 0.5 : 1,
+                      cursor:  (!answer.trim() || sending) ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {sending ? '발송 중...' : '저장 + 이메일 발송'}
+                  </button>
+                </div>
               </div>
 
             </div>
@@ -408,10 +423,11 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     let replies: Reply[] = []
     try {
       const { rows: replyRows } = await client.query(
-        `SELECT r.id, r.content, r.is_admin, r.file_url, r.file_name, r.created_at,
+        `SELECT r.id, r.content, (r.author_role = 'admin') AS is_admin,
+                r.file_url, r.file_name, r.created_at,
                 u.name AS author_name
          FROM inquiry_replies r
-         LEFT JOIN users u ON u.id = r.user_id
+         LEFT JOIN users u ON u.id = r.author_id
          WHERE r.inquiry_id = $1
          ORDER BY r.created_at ASC`,
         [inquiryId]

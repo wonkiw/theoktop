@@ -8,8 +8,10 @@ interface Inquiry {
   id: number
   title: string
   content: string
+  inquiry_type: string | null
+  building_address: string | null
   answer: string | null
-  status: 'pending' | 'answered'
+  status: 'pending' | 'reviewing' | 'completed'
   created_at: string
   answered_at: string | null
   customer_name: string
@@ -17,9 +19,9 @@ interface Inquiry {
 }
 
 const TABS = [
-  { key: 'pending',  label: '미답변' },
-  { key: 'answered', label: '답변완료' },
-  { key: 'all',      label: '전체' },
+  { key: 'pending',   label: '미답변' },
+  { key: 'completed', label: '답변완료' },
+  { key: 'all',       label: '전체' },
 ]
 
 function formatDateTime(iso: string) {
@@ -60,28 +62,32 @@ function InquiryModal({
   const [answer, setAnswer]     = useState(inquiry.answer ?? '')
   const [sending, setSending]   = useState(false)
   const [toast, setToast]       = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-  const isPending               = inquiry.status === 'pending'
+  const isPending               = inquiry.status !== 'completed'
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type })
     setTimeout(() => setToast(null), 3000)
   }
 
-  const handleReply = async () => {
+  const handleReply = async (sendEmail: boolean) => {
     if (!answer.trim()) return
     setSending(true)
     try {
       const res = await fetch('/api/admin/inquiries/reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ inquiry_id: inquiry.id, answer }),
+        body: JSON.stringify({ inquiry_id: inquiry.id, answer, send_email: sendEmail }),
       })
       const data = await res.json()
       if (res.ok) {
-        showToast(data.emailSent ? '답변이 발송되었습니다.' : '저장되었으나 이메일 발송에 실패했습니다.', data.emailSent ? 'success' : 'error')
+        if (sendEmail) {
+          showToast(data.emailSent ? '답변 저장 + 이메일 발송 완료' : '저장됨 (이메일 발송 실패)', data.emailSent ? 'success' : 'error')
+        } else {
+          showToast('답변이 저장되었습니다.', 'success')
+        }
         setTimeout(() => { onReplied(inquiry.id); onClose() }, 1500)
       } else {
-        showToast(data.message ?? '발송에 실패했습니다.', 'error')
+        showToast(data.message ?? '저장에 실패했습니다.', 'error')
       }
     } catch {
       showToast('네트워크 오류가 발생했습니다.', 'error')
@@ -158,10 +164,22 @@ function InquiryModal({
         {isPending && (
           <div style={ms.footer}>
             <p style={ms.emailNote}>
-              발송 시 <strong>{inquiry.customer_email}</strong>로 이메일이 전송됩니다.
+              이메일 발송 시 <strong>{inquiry.customer_email}</strong>로 전송됩니다.
             </p>
             <div style={{ display: 'flex', gap: 10 }}>
               <button style={ms.btnCancel} onClick={onClose}>취소</button>
+              <button
+                style={{
+                  ...ms.btnSend,
+                  background: '#555',
+                  opacity: (!answer.trim() || sending) ? 0.5 : 1,
+                  cursor:  (!answer.trim() || sending) ? 'not-allowed' : 'pointer',
+                }}
+                disabled={!answer.trim() || sending}
+                onClick={() => handleReply(false)}
+              >
+                {sending ? '저장 중...' : '저장만'}
+              </button>
               <button
                 style={{
                   ...ms.btnSend,
@@ -169,9 +187,9 @@ function InquiryModal({
                   cursor:  (!answer.trim() || sending) ? 'not-allowed' : 'pointer',
                 }}
                 disabled={!answer.trim() || sending}
-                onClick={handleReply}
+                onClick={() => handleReply(true)}
               >
-                {sending ? '발송 중...' : '답변 저장 + 이메일 발송'}
+                {sending ? '발송 중...' : '저장 + 이메일 발송'}
               </button>
             </div>
           </div>
@@ -188,7 +206,7 @@ export default function AdminInquiries() {
   const router = useRouter()
   const [inquiries, setInquiries]   = useState<Inquiry[]>([])
   const [pendingCount, setPending]  = useState(0)
-  const [tab, setTab]               = useState<'pending' | 'answered' | 'all'>('pending')
+  const [tab, setTab]               = useState<'pending' | 'completed' | 'all'>('pending')
   const [loading, setLoading]       = useState(true)
   const [token, setToken]           = useState('')
   const [selected, setSelected]     = useState<Inquiry | null>(null)
@@ -220,13 +238,13 @@ export default function AdminInquiries() {
     })
   }, [router, fetchList, tab])
 
-  const handleTabChange = (key: 'pending' | 'answered' | 'all') => {
+  const handleTabChange = (key: 'pending' | 'completed' | 'all') => {
     setTab(key)
   }
 
   const handleReplied = (id: number) => {
     setInquiries(prev =>
-      prev.map(q => q.id === id ? { ...q, status: 'answered', answered_at: new Date().toISOString() } : q)
+      prev.map(q => q.id === id ? { ...q, status: 'completed', answered_at: new Date().toISOString() } : q)
     )
     setPending(p => Math.max(0, p - 1))
     showToast('답변이 등록되었습니다.', 'success')
@@ -280,7 +298,7 @@ export default function AdminInquiries() {
                 key={t.key}
                 role="tab"
                 aria-selected={tab === t.key}
-                onClick={() => handleTabChange(t.key as 'pending' | 'answered' | 'all')}
+                onClick={() => handleTabChange(t.key as 'pending' | 'completed' | 'all')}
                 style={{
                   ...s.tab,
                   ...(tab === t.key ? s.tabActive : {}),
@@ -323,7 +341,7 @@ export default function AdminInquiries() {
                 ) : inquiries.length === 0 ? (
                   <tr>
                     <td colSpan={4} style={{ ...s.td, textAlign: 'center', padding: '48px', color: '#bbb', fontSize: 14 }}>
-                      {tab === 'pending' ? '미답변 문의가 없습니다.' : tab === 'answered' ? '답변된 문의가 없습니다.' : '문의가 없습니다.'}
+                      {tab === 'pending' ? '미답변 문의가 없습니다.' : tab === 'completed' ? '답변된 문의가 없습니다.' : '문의가 없습니다.'}
                     </td>
                   </tr>
                 ) : (

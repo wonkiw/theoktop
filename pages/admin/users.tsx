@@ -6,7 +6,7 @@ import { getSupabaseClient } from '../../lib/supabase'
 
 /* ── Types ── */
 interface UserRow {
-  id: number
+  id: string
   name: string
   email: string
   phone: string | null
@@ -84,7 +84,7 @@ function UserModal({
   token,
   onClose,
 }: {
-  userId: number
+  userId: string
   token: string
   onClose: () => void
 }) {
@@ -263,7 +263,7 @@ export default function AdminUsers() {
   const [search, setSearch]         = useState('')
   const [loading, setLoading]       = useState(true)
   const [token, setToken]           = useState('')
-  const [selectedId, setSelectedId] = useState<number | null>(null)
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const fetchUsers = useCallback(async (tk: string, q: string, pg: number) => {

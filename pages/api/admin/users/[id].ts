@@ -9,8 +9,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const admin = await requireAdmin(req.headers.authorization)
   if (!admin) return res.status(401).json({ success: false, message: '관리자 권한이 필요합니다.' })
 
-  const userId = Number(req.query.id)
-  if (isNaN(userId)) return res.status(400).json({ success: false, message: '잘못된 사용자 ID입니다.' })
+  const userId = req.query.id as string
+  if (!userId || typeof userId !== 'string') return res.status(400).json({ success: false, message: '잘못된 사용자 ID입니다.' })
 
   try {
     const [userRes, ordersRes, docsRes] = await Promise.all([

@@ -27,10 +27,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let replies: unknown[] = []
       try {
         const { rows: replyRows } = await getPool().query(
-          `SELECT r.id, r.content, r.is_admin, r.file_url, r.file_name, r.created_at,
+          `SELECT r.id, r.content, (r.author_role = 'admin') AS is_admin,
+                  r.file_url, r.file_name, r.created_at,
                   u.name AS author_name
            FROM inquiry_replies r
-           LEFT JOIN users u ON u.id = r.user_id
+           LEFT JOIN users u ON u.id = r.author_id
            WHERE r.inquiry_id = $1
            ORDER BY r.created_at ASC`,
           [inquiryId]

@@ -10,7 +10,7 @@ const MAX_BYTES = 10 * 1024 * 1024
 
 type FileState = {
   file: File
-  previewUrl: string | null // 이미지면 URL, PDF면 null
+  previewUrl: string | null
   uploading: boolean
   uploadedUrl: string | null
   error: string
@@ -19,7 +19,9 @@ type FileState = {
 export default function NewOrderPage() {
   const router = useRouter()
 
+  const [useManualAddress, setUseManualAddress] = useState(false)
   const [addressInfo, setAddressInfo]  = useState<AddressInfo | null>(null)
+  const [manualAddress, setManualAddress] = useState('')
   const [orderType, setOrderType]     = useState('')
   const [description, setDescription] = useState('')
   const [fileState, setFileState]     = useState<FileState | null>(null)
@@ -27,6 +29,10 @@ export default function NewOrderPage() {
   const [submitting, setSubmitting]   = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const effectiveAddress = useManualAddress
+    ? manualAddress.trim()
+    : (addressInfo?.roadAddress || addressInfo?.jibunAddress || '').trim()
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -78,8 +84,8 @@ export default function NewOrderPage() {
     e.preventDefault()
     setSubmitError('')
 
-    if (!addressInfo?.roadAddress && !addressInfo?.jibunAddress) {
-      setSubmitError('건물 주소를 검색하여 선택해주세요.')
+    if (!effectiveAddress) {
+      setSubmitError('건물 주소를 입력해주세요.')
       return
     }
     if (!orderType) {
@@ -103,14 +109,14 @@ export default function NewOrderPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          building_address: (addressInfo?.roadAddress || addressInfo?.jibunAddress || '').trim(),
-          building_detail:  addressInfo?.detail?.trim() || null,
-          road_address:     addressInfo?.roadAddress  || null,
-          jibun_address:    addressInfo?.jibunAddress || null,
-          building_name:    addressInfo?.buildingName || null,
-          zip_code:         addressInfo?.zipCode      || null,
-          lat:              addressInfo?.lat          ?? null,
-          lng:              addressInfo?.lng          ?? null,
+          building_address: effectiveAddress,
+          building_detail:  useManualAddress ? null : (addressInfo?.detail?.trim() || null),
+          road_address:     useManualAddress ? null : (addressInfo?.roadAddress  || null),
+          jibun_address:    useManualAddress ? null : (addressInfo?.jibunAddress || null),
+          building_name:    useManualAddress ? null : (addressInfo?.buildingName || null),
+          zip_code:         useManualAddress ? null : (addressInfo?.zipCode      || null),
+          lat:              useManualAddress ? null : (addressInfo?.lat          ?? null),
+          lng:              useManualAddress ? null : (addressInfo?.lng          ?? null),
           order_type: orderType,
           description: description.trim() || null,
         }),
@@ -160,8 +166,27 @@ export default function NewOrderPage() {
 
           {/* 건물 주소 */}
           <div style={s.section}>
-            <h3 style={s.sectionTitle}>건물 주소</h3>
-            <AddressSearch onAddressSelect={setAddressInfo} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <h3 style={{ ...s.sectionTitle, margin: 0 }}>건물 주소</h3>
+              <button
+                type="button"
+                onClick={() => { setUseManualAddress(!useManualAddress); setAddressInfo(null); setManualAddress('') }}
+                style={{ fontSize: 12, color: '#888', background: 'none', border: '1px solid #ddd', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
+              >
+                {useManualAddress ? '🔍 지도 검색으로' : '✏️ 직접 입력'}
+              </button>
+            </div>
+            {useManualAddress ? (
+              <input
+                type="text"
+                value={manualAddress}
+                onChange={e => setManualAddress(e.target.value)}
+                placeholder="예: 서울시 강남구 테헤란로 123"
+                style={s.input}
+              />
+            ) : (
+              <AddressSearch onAddressSelect={setAddressInfo} />
+            )}
           </div>
 
           {/* 의뢰 유형 */}

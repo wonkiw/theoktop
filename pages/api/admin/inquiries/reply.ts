@@ -9,38 +9,51 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const admin = await requireAdmin(req.headers.authorization)
   if (!admin) return res.status(401).json({ success: false, message: '관리자 권한이 필요합니다.' })
 
-  const { inquiry_id, answer } = req.body
+  const { inquiry_id, answer, send_email: sendEmailFlag = true, file_url, file_name } = req.body
   if (!inquiry_id || !answer?.trim()) {
     return res.status(400).json({ success: false, message: '문의 ID와 답변 내용이 필요합니다.' })
   }
 
+  const client = await getPool().connect()
   try {
-    const { rows } = await getPool().query(
-      `UPDATE inquiries
-       SET answer = $2, status = 'answered', answered_at = NOW(), answered_by = $3
-       WHERE id = $1 AND status = 'pending'
-       RETURNING title, user_id`,
-      [inquiry_id, answer, admin.id]
+    // 1. inquiry_replies에 답변 저장
+    await client.query(
+      `INSERT INTO inquiry_replies (inquiry_id, author_id, author_role, content, file_url, file_name)
+       VALUES ($1, $2, 'admin', $3, $4, $5)`,
+      [inquiry_id, admin.id, answer.trim(), file_url ?? null, file_name ?? null]
     )
 
-    if (!rows.length) {
-      return res.status(409).json({ success: false, message: '이미 답변된 문의이거나 존재하지 않습니다.' })
+    // 2. inquiries 상태를 completed로 업데이트
+    await client.query(
+      `UPDATE inquiries
+       SET status = 'completed', answer = $2, answered_at = NOW()
+       WHERE id = $1`,
+      [inquiry_id, answer.trim()]
+    )
+
+    // 3. 이메일 발송 (선택)
+    let emailSent = false
+    if (sendEmailFlag) {
+      const { rows } = await client.query(
+        `SELECT u.name, u.email
+         FROM inquiries i
+         JOIN users u ON u.id = i.user_id
+         WHERE i.id = $1`,
+        [inquiry_id]
+      )
+      if (rows.length) {
+        const { name, email } = rows[0]
+        const { subject, html } = inquiryReplyTemplate(name, '', answer.trim())
+        const result = await sendEmail({ to: email, subject, html })
+        emailSent = result.success
+      }
     }
 
-    const { title, user_id } = rows[0]
-
-    const { rows: userRows } = await getPool().query(
-      'SELECT name, email FROM users WHERE id = $1',
-      [user_id]
-    )
-    const { name: customerName, email: customerEmail } = userRows[0]
-
-    const { subject, html } = inquiryReplyTemplate(customerName, title, answer)
-    const emailResult = await sendEmail({ to: customerEmail, subject, html })
-
-    return res.status(200).json({ success: true, emailSent: emailResult.success })
+    return res.status(200).json({ success: true, emailSent })
   } catch (err) {
     console.error('[admin/inquiries/reply]', err)
     return res.status(500).json({ success: false, message: '답변 처리 중 오류가 발생했습니다.' })
+  } finally {
+    client.release()
   }
 }
