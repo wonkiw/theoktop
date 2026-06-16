@@ -12,7 +12,12 @@ export default async function handler(
     DATABASE_PASSWORD: process.env.DATABASE_PASSWORD ? 'SET' : 'NOT_SET',
     DATABASE_PORT: process.env.DATABASE_PORT || 'NOT_SET',
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'NOT_SET',
-    ALL_DB_KEYS: Object.keys(process.env).filter(k => k.startsWith('DATABASE')),
+    NAVER_MAP_KEY: process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID || 'NOT_SET',
+    ALL_DB_KEYS: Object.keys(process.env).filter(k =>
+      k.startsWith('DATABASE') ||
+      k.startsWith('NEXT_PUBLIC') ||
+      k.startsWith('NAVER')
+    ),
   }
 
   let dbConnected = false

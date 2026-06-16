@@ -22,6 +22,7 @@ export default function NewOrderPage() {
   const [addressMode, setAddressMode] = useState<'search' | 'manual'>('search')
   const [buildingAddress, setBuildingAddress] = useState('')
   const [manualAddress, setManualAddress] = useState('')
+  const [mapLoaded, setMapLoaded] = useState(false)
   const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null)
   const [orderType, setOrderType] = useState('')
   const [description, setDescription] = useState('')
@@ -32,9 +33,25 @@ export default function NewOrderPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
-    if (!clientId) {
+    const mapClientId = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
+    if (!mapClientId || mapClientId === '') {
       setAddressMode('manual')
+      return
+    }
+
+    if (typeof window !== 'undefined' && !window.naver) {
+      const script = document.createElement('script')
+      script.type = 'text/javascript'
+      script.src = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${mapClientId}&submodules=geocoder`
+      script.async = true
+      script.onload = () => setMapLoaded(true)
+      script.onerror = () => {
+        console.error('네이버 지도 로드 실패')
+        setAddressMode('manual')
+      }
+      document.head.appendChild(script)
+    } else if (typeof window !== 'undefined' && window.naver) {
+      setMapLoaded(true)
     }
   }, [])
 
@@ -212,14 +229,45 @@ export default function NewOrderPage() {
 
               {/* 주소 검색 모드 */}
               {addressMode === 'search' && (
-                <AddressSearch
-                  onAddressSelect={(addr) => {
-                    const address = addr.roadAddress || addr.jibunAddress || ''
-                    setAddressInfo(addr)
-                    setBuildingAddress(address)
-                    setManualAddress(address)
-                  }}
-                />
+                <div>
+                  {mapLoaded ? (
+                    <AddressSearch
+                      onAddressSelect={(addr) => {
+                        const address = addr.roadAddress || addr.jibunAddress || ''
+                        setAddressInfo(addr)
+                        setBuildingAddress(address)
+                        setManualAddress(address)
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      padding: '20px',
+                      textAlign: 'center',
+                      color: '#888',
+                      background: '#f9f9f9',
+                      borderRadius: '8px',
+                      border: '1px solid #eee',
+                    }}>
+                      <p style={{ marginBottom: '12px' }}>
+                        지도를 불러오는 중이거나 API 키 오류가 있습니다
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setAddressMode('manual')}
+                        style={{
+                          padding: '8px 16px',
+                          background: '#D4AF37',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          cursor: 'pointer',
+                        }}
+                      >
+                        직접 입력으로 전환
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
 
               {/* 직접 입력 모드 */}

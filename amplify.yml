@@ -26,6 +26,7 @@ frontend:
         - echo "NAVER_CLIENT_SECRET=$NAVER_CLIENT_SECRET" >> .env.production
         - echo "NAVER_REDIRECT_URI=$NAVER_REDIRECT_URI" >> .env.production
         - echo "NEXT_PUBLIC_NAVER_MAP_CLIENT_ID=$NEXT_PUBLIC_NAVER_MAP_CLIENT_ID" >> .env.production
+        - cat .env.production
     build:
       commands:
         - npm run build
