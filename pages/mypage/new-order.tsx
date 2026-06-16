@@ -4,7 +4,9 @@ import Link from 'next/link'
 import Header from '../../components/Header'
 import AddressSearch, { AddressInfo } from '../../components/AddressSearch'
 
-const HAS_NAVER_MAP = !!process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
+const hasNaverMap = typeof window !== 'undefined'
+  ? true
+  : !!process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
 const ORDER_TYPES = ['매매', '전세', '임대', '기타']
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png']
 const MAX_BYTES = 10 * 1024 * 1024
@@ -20,7 +22,7 @@ type FileState = {
 export default function NewOrderPage() {
   const router = useRouter()
 
-  const [useManualAddress, setUseManualAddress] = useState(!HAS_NAVER_MAP)
+  const [useManualAddress, setUseManualAddress] = useState(!hasNaverMap)
   const [addressInfo, setAddressInfo]  = useState<AddressInfo | null>(null)
   const [manualAddress, setManualAddress] = useState('')
   const [orderType, setOrderType]     = useState('')

@@ -33,9 +33,9 @@ export default function AddressSearch({ onAddressSelect }: Props) {
 
   /* ── Load Naver Maps SDK ─────────────────────────────────── */
   useEffect(() => {
-    const clientId = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
+    const NAVER_MAP_CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID || ''
     const scriptId = 'naver-maps-sdk'
-    const sdkUrl   = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${clientId}&submodules=geocoder`
+    const sdkUrl   = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NAVER_MAP_CLIENT_ID}&submodules=geocoder`
 
     /* SDK가 이미 완전히 로드된 경우 */
     if (window.naver?.maps?.Map) { setMapReady(true); return }
