@@ -4,9 +4,6 @@ import Link from 'next/link'
 import Header from '../../components/Header'
 import AddressSearch, { AddressInfo } from '../../components/AddressSearch'
 
-const hasNaverMap = typeof window !== 'undefined'
-  ? true
-  : !!process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
 const ORDER_TYPES = ['매매', '전세', '임대', '기타']
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png']
 const MAX_BYTES = 10 * 1024 * 1024
@@ -22,20 +19,27 @@ type FileState = {
 export default function NewOrderPage() {
   const router = useRouter()
 
-  const [useManualAddress, setUseManualAddress] = useState(!hasNaverMap)
-  const [addressInfo, setAddressInfo]  = useState<AddressInfo | null>(null)
-  const [manualAddress, setManualAddress] = useState('')
-  const [orderType, setOrderType]     = useState('')
+  const [addressMode, setAddressMode] = useState<'search' | 'manual'>('search')
+  const [buildingAddress, setBuildingAddress] = useState('')
+  const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null)
+  const [orderType, setOrderType] = useState('')
   const [description, setDescription] = useState('')
-  const [fileState, setFileState]     = useState<FileState | null>(null)
+  const [fileState, setFileState] = useState<FileState | null>(null)
   const [submitError, setSubmitError] = useState('')
-  const [submitting, setSubmitting]   = useState(false)
+  const [submitting, setSubmitting] = useState(false)
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const effectiveAddress = useManualAddress
-    ? manualAddress.trim()
-    : (addressInfo?.roadAddress || addressInfo?.jibunAddress || '').trim()
+  const handleAddressSelect = (addr: AddressInfo) => {
+    setAddressInfo(addr)
+    setBuildingAddress(addr.roadAddress || addr.jibunAddress || '')
+  }
+
+  const handleModeSwitch = (mode: 'search' | 'manual') => {
+    setAddressMode(mode)
+    setBuildingAddress('')
+    setAddressInfo(null)
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -63,7 +67,6 @@ export default function NewOrderPage() {
   }
 
   const uploadToS3 = async (file: File): Promise<string> => {
-    // 1. Presigned URL 발급
     const urlRes = await fetch('/api/documents/upload-url', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -72,7 +75,6 @@ export default function NewOrderPage() {
     const urlData = await urlRes.json()
     if (!urlRes.ok) throw new Error(urlData.message)
 
-    // 2. S3 직접 업로드
     const s3Res = await fetch(urlData.uploadUrl, {
       method: 'PUT',
       body: file,
@@ -87,10 +89,6 @@ export default function NewOrderPage() {
     e.preventDefault()
     setSubmitError('')
 
-    if (!effectiveAddress) {
-      setSubmitError('건물 주소를 입력해주세요.')
-      return
-    }
     if (!orderType) {
       setSubmitError('의뢰 유형을 선택해주세요.')
       return
@@ -99,7 +97,6 @@ export default function NewOrderPage() {
     setSubmitting(true)
 
     try {
-      // 파일 있으면 먼저 S3 업로드
       let uploadedFileUrl: string | null = null
       if (fileState?.file) {
         setFileState(prev => prev ? { ...prev, uploading: true } : prev)
@@ -107,19 +104,19 @@ export default function NewOrderPage() {
         setFileState(prev => prev ? { ...prev, uploading: false, uploadedUrl: uploadedFileUrl } : prev)
       }
 
-      // 주문 생성
+      const isSearch = addressMode === 'search'
       const orderRes = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          building_address: effectiveAddress,
-          building_detail:  useManualAddress ? null : (addressInfo?.detail?.trim() || null),
-          road_address:     useManualAddress ? null : (addressInfo?.roadAddress  || null),
-          jibun_address:    useManualAddress ? null : (addressInfo?.jibunAddress || null),
-          building_name:    useManualAddress ? null : (addressInfo?.buildingName || null),
-          zip_code:         useManualAddress ? null : (addressInfo?.zipCode      || null),
-          lat:              useManualAddress ? null : (addressInfo?.lat          ?? null),
-          lng:              useManualAddress ? null : (addressInfo?.lng          ?? null),
+          building_address: buildingAddress,
+          building_detail:  isSearch ? (addressInfo?.detail?.trim() || null) : null,
+          road_address:     isSearch ? (addressInfo?.roadAddress  || null) : null,
+          jibun_address:    isSearch ? (addressInfo?.jibunAddress || null) : null,
+          building_name:    isSearch ? (addressInfo?.buildingName || null) : null,
+          zip_code:         isSearch ? (addressInfo?.zipCode      || null) : null,
+          lat:              isSearch ? (addressInfo?.lat          ?? null) : null,
+          lng:              isSearch ? (addressInfo?.lng          ?? null) : null,
           order_type: orderType,
           description: description.trim() || null,
         }),
@@ -127,7 +124,6 @@ export default function NewOrderPage() {
       const orderData = await orderRes.json()
       if (!orderRes.ok) throw new Error(orderData.message)
 
-      // 파일 있으면 documents 테이블에 저장
       if (fileState?.file && uploadedFileUrl) {
         const saveRes = await fetch('/api/documents/save', {
           method: 'POST',
@@ -158,7 +154,6 @@ export default function NewOrderPage() {
       <Header />
       <div style={s.container}>
 
-        {/* Sub-nav */}
         <div style={s.header}>
           <Link href="/mypage" style={s.backLink}>← 마이페이지</Link>
         </div>
@@ -169,26 +164,51 @@ export default function NewOrderPage() {
 
           {/* 건물 주소 */}
           <div style={s.section}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <h3 style={{ ...s.sectionTitle, margin: 0 }}>건물 주소</h3>
+            <h3 style={s.sectionTitle}>건물 주소</h3>
+
+            {/* 모드 탭 */}
+            <div style={s.tabRow}>
               <button
                 type="button"
-                onClick={() => { setUseManualAddress(!useManualAddress); setAddressInfo(null); setManualAddress('') }}
-                style={{ fontSize: 12, color: '#888', background: 'none', border: '1px solid #ddd', borderRadius: 6, padding: '4px 10px', cursor: 'pointer' }}
+                onClick={() => handleModeSwitch('search')}
+                style={{
+                  ...s.tabBtn,
+                  borderColor: addressMode === 'search' ? '#D4AF37' : '#ddd',
+                  background: addressMode === 'search' ? '#D4AF37' : '#fff',
+                  color: addressMode === 'search' ? '#111' : '#555',
+                  fontWeight: addressMode === 'search' ? 600 : 400,
+                }}
               >
-                {useManualAddress ? '지도 검색으로' : '직접 입력'}
+                🔍 주소 검색
+              </button>
+              <button
+                type="button"
+                onClick={() => handleModeSwitch('manual')}
+                style={{
+                  ...s.tabBtn,
+                  borderColor: addressMode === 'manual' ? '#D4AF37' : '#ddd',
+                  background: addressMode === 'manual' ? '#D4AF37' : '#fff',
+                  color: addressMode === 'manual' ? '#111' : '#555',
+                  fontWeight: addressMode === 'manual' ? 600 : 400,
+                }}
+              >
+                ✏️ 직접 입력
               </button>
             </div>
-            {useManualAddress ? (
-              <input
-                type="text"
-                value={manualAddress}
-                onChange={e => setManualAddress(e.target.value)}
-                placeholder="예: 서울시 강남구 테헤란로 123"
-                style={s.input}
-              />
+
+            {addressMode === 'search' ? (
+              <AddressSearch onAddressSelect={handleAddressSelect} />
             ) : (
-              <AddressSearch onAddressSelect={setAddressInfo} />
+              <div>
+                <input
+                  type="text"
+                  placeholder="건물 주소를 입력하세요 (예: 서울시 강남구 테헤란로 123)"
+                  value={buildingAddress}
+                  onChange={e => setBuildingAddress(e.target.value)}
+                  style={s.input}
+                />
+                <p style={s.inputHint}>도로명 주소 또는 지번 주소를 직접 입력해주세요</p>
+              </div>
             )}
           </div>
 
@@ -270,10 +290,8 @@ export default function NewOrderPage() {
             )}
           </div>
 
-          {/* 에러 */}
           {submitError && <p style={s.error}>{submitError}</p>}
 
-          {/* 제출 */}
           <button
             type="submit"
             style={s.submitBtn}
@@ -307,13 +325,6 @@ const s: Record<string, React.CSSProperties> = {
     padding: '24px 0',
     borderBottom: '1px solid #ebebeb',
     marginBottom: 40,
-  },
-  logo: {
-    fontSize: 20,
-    fontWeight: 800,
-    letterSpacing: 2,
-    color: '#111',
-    textDecoration: 'none',
   },
   backLink: {
     fontSize: 13,
@@ -352,14 +363,21 @@ const s: Record<string, React.CSSProperties> = {
     color: '#aaa',
     margin: '-4px 0 0',
   },
-  addressRow: {
+  tabRow: {
     display: 'flex',
-    gap: 10,
-    alignItems: 'center',
+    gap: 8,
   },
+  tabBtn: {
+    padding: '8px 16px',
+    borderRadius: 6,
+    border: '1px solid',
+    fontSize: 13,
+    cursor: 'pointer',
+    transition: 'all 0.15s',
+  } as React.CSSProperties,
   input: {
-    padding: '12px 14px',
-    border: '1.5px solid #e0e0e0',
+    padding: '12px 16px',
+    border: '1px solid #ddd',
     borderRadius: 8,
     fontSize: 14,
     outline: 'none',
@@ -367,16 +385,10 @@ const s: Record<string, React.CSSProperties> = {
     boxSizing: 'border-box',
     background: '#fff',
   },
-  addressBtn: {
-    padding: '12px 18px',
-    background: '#111',
-    color: '#fff',
-    border: 'none',
-    borderRadius: 8,
-    fontSize: 13,
-    fontWeight: 600,
-    cursor: 'pointer',
-    whiteSpace: 'nowrap',
+  inputHint: {
+    fontSize: 12,
+    color: '#999',
+    margin: '6px 0 0',
   },
   radioGroup: {
     display: 'flex',
