@@ -26,6 +26,8 @@ export default function AddressSearch({ onAddressSelect }: Props) {
   const [selected, setSelected] = useState<GeocodeResult | null>(null)
   const [detail,   setDetail]   = useState('')
   const [mapReady, setMapReady] = useState(false)
+  const [clientId, setClientId] = useState('')
+  const [ready,    setReady]    = useState(false)
 
   const mapRef   = useRef<HTMLDivElement>(null)
   const mapInst  = useRef<any>(null)
@@ -33,31 +35,35 @@ export default function AddressSearch({ onAddressSelect }: Props) {
 
   /* ── Load Naver Maps SDK ─────────────────────────────────── */
   useEffect(() => {
-    const NAVER_MAP_CLIENT_ID = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID || ''
-    const scriptId = 'naver-maps-sdk'
-    const sdkUrl   = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${NAVER_MAP_CLIENT_ID}&submodules=geocoder`
+    const id = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID || ''
+    setClientId(id)
 
-    /* SDK가 이미 완전히 로드된 경우 */
-    if (window.naver?.maps?.Map) { setMapReady(true); return }
+    if (!id) {
+      setReady(false)
+      return
+    }
 
-    /* index.html 등 다른 곳에서 구 URL로 로드한 script가 있으면 제거 후 재주입
-       (ncpClientId 방식 또는 플레이스홀더 key로 로드된 스크립트 충돌 방지) */
-    const existing = document.getElementById(scriptId)
+    if ((window as any).naver?.maps?.Map) {
+      setMapReady(true)
+      setReady(true)
+      return
+    }
+
+    const existing = document.querySelector('script[src*="oapi.map.naver.com"]')
     if (existing) {
-      /* 이미 올바른 URL이면 onload 대기, 아니면 제거 후 재주입 */
-      if ((existing as HTMLScriptElement).src === sdkUrl) {
-        existing.addEventListener('load', () => setMapReady(true))
-        return
-      }
-      existing.remove()
+      existing.addEventListener('load', () => { setMapReady(true); setReady(true) })
+      return
     }
 
     const script    = document.createElement('script')
-    script.id       = scriptId
-    script.src      = sdkUrl
+    script.id       = 'naver-maps-sdk'
+    script.src      = `https://oapi.map.naver.com/openapi/v3/maps.js?ncpKeyId=${id}&submodules=geocoder`
     script.async    = true
-    script.onload   = () => setMapReady(true)
-    script.onerror  = () => console.error('[AddressSearch] 네이버 지도 SDK 로드 실패. NCP 콘솔에서 Maps 서비스 활성화 및 도메인 등록을 확인하세요.')
+    script.onload   = () => { setMapReady(true); setReady(true) }
+    script.onerror  = () => {
+      console.error('[AddressSearch] 네이버 지도 SDK 로드 실패. NCP 콘솔에서 Maps 서비스 활성화 및 도메인 등록을 확인하세요.')
+      setReady(false)
+    }
     document.head.appendChild(script)
   }, [])
 
@@ -146,6 +152,12 @@ export default function AddressSearch({ onAddressSelect }: Props) {
   }
 
   /* ── Render ──────────────────────────────────────────────── */
+  if (!clientId || !ready) return (
+    <div style={{ color: '#888', fontSize: '13px', padding: '8px' }}>
+      주소 검색을 준비 중입니다...
+    </div>
+  )
+
   return (
     <div style={s.wrap}>
       {/* Spinner keyframes injection */}
