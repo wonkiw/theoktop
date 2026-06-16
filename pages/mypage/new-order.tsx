@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Header from '../../components/Header'
@@ -21,6 +21,7 @@ export default function NewOrderPage() {
 
   const [addressMode, setAddressMode] = useState<'search' | 'manual'>('search')
   const [buildingAddress, setBuildingAddress] = useState('')
+  const [manualAddress, setManualAddress] = useState('')
   const [addressInfo, setAddressInfo] = useState<AddressInfo | null>(null)
   const [orderType, setOrderType] = useState('')
   const [description, setDescription] = useState('')
@@ -30,16 +31,12 @@ export default function NewOrderPage() {
 
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleAddressSelect = (addr: AddressInfo) => {
-    setAddressInfo(addr)
-    setBuildingAddress(addr.roadAddress || addr.jibunAddress || '')
-  }
-
-  const handleModeSwitch = (mode: 'search' | 'manual') => {
-    setAddressMode(mode)
-    setBuildingAddress('')
-    setAddressInfo(null)
-  }
+  useEffect(() => {
+    const clientId = process.env.NEXT_PUBLIC_NAVER_MAP_CLIENT_ID
+    if (!clientId) {
+      setAddressMode('manual')
+    }
+  }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -166,50 +163,93 @@ export default function NewOrderPage() {
           <div style={s.section}>
             <h3 style={s.sectionTitle}>건물 주소</h3>
 
-            {/* 모드 탭 */}
-            <div style={s.tabRow}>
-              <button
-                type="button"
-                onClick={() => handleModeSwitch('search')}
-                style={{
-                  ...s.tabBtn,
-                  borderColor: addressMode === 'search' ? '#D4AF37' : '#ddd',
-                  background: addressMode === 'search' ? '#D4AF37' : '#fff',
-                  color: addressMode === 'search' ? '#111' : '#555',
-                  fontWeight: addressMode === 'search' ? 600 : 400,
-                }}
-              >
-                🔍 주소 검색
-              </button>
-              <button
-                type="button"
-                onClick={() => handleModeSwitch('manual')}
-                style={{
-                  ...s.tabBtn,
-                  borderColor: addressMode === 'manual' ? '#D4AF37' : '#ddd',
-                  background: addressMode === 'manual' ? '#D4AF37' : '#fff',
-                  color: addressMode === 'manual' ? '#111' : '#555',
-                  fontWeight: addressMode === 'manual' ? 600 : 400,
-                }}
-              >
-                ✏️ 직접 입력
-              </button>
-            </div>
-
-            {addressMode === 'search' ? (
-              <AddressSearch onAddressSelect={handleAddressSelect} />
-            ) : (
-              <div>
-                <input
-                  type="text"
-                  placeholder="건물 주소를 입력하세요 (예: 서울시 강남구 테헤란로 123)"
-                  value={buildingAddress}
-                  onChange={e => setBuildingAddress(e.target.value)}
-                  style={s.input}
-                />
-                <p style={s.inputHint}>도로명 주소 또는 지번 주소를 직접 입력해주세요</p>
+            <div>
+              {/* 탭 버튼 */}
+              <div style={{
+                display: 'flex',
+                gap: '8px',
+                marginBottom: '16px',
+                borderBottom: '1px solid #eee',
+                paddingBottom: '12px',
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setAddressMode('search')}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '6px',
+                    border: '1px solid',
+                    borderColor: addressMode === 'search' ? '#D4AF37' : '#ddd',
+                    background: addressMode === 'search' ? '#D4AF37' : 'transparent',
+                    color: addressMode === 'search' ? '#111' : '#666',
+                    fontSize: '13px',
+                    fontWeight: addressMode === 'search' ? 600 : 400,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  🔍 주소 검색
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAddressMode('manual')}
+                  style={{
+                    padding: '8px 18px',
+                    borderRadius: '6px',
+                    border: '1px solid',
+                    borderColor: addressMode === 'manual' ? '#D4AF37' : '#ddd',
+                    background: addressMode === 'manual' ? '#D4AF37' : 'transparent',
+                    color: addressMode === 'manual' ? '#111' : '#666',
+                    fontSize: '13px',
+                    fontWeight: addressMode === 'manual' ? 600 : 400,
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  ✏️ 직접 입력
+                </button>
               </div>
-            )}
+
+              {/* 주소 검색 모드 */}
+              {addressMode === 'search' && (
+                <AddressSearch
+                  onAddressSelect={(addr) => {
+                    const address = addr.roadAddress || addr.jibunAddress || ''
+                    setAddressInfo(addr)
+                    setBuildingAddress(address)
+                    setManualAddress(address)
+                  }}
+                />
+              )}
+
+              {/* 직접 입력 모드 */}
+              {addressMode === 'manual' && (
+                <div>
+                  <input
+                    type="text"
+                    placeholder="예: 서울시 강남구 테헤란로 123 OO빌딩"
+                    value={manualAddress}
+                    onChange={e => {
+                      setManualAddress(e.target.value)
+                      setBuildingAddress(e.target.value)
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px 16px',
+                      border: '1px solid #ddd',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      boxSizing: 'border-box' as const,
+                      outline: 'none',
+                      color: '#111',
+                    }}
+                  />
+                  <p style={{ fontSize: '12px', color: '#888', marginTop: '6px' }}>
+                    도로명 주소 또는 지번 주소를 직접 입력해주세요
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 의뢰 유형 */}
@@ -362,33 +402,6 @@ const s: Record<string, React.CSSProperties> = {
     fontSize: 12,
     color: '#aaa',
     margin: '-4px 0 0',
-  },
-  tabRow: {
-    display: 'flex',
-    gap: 8,
-  },
-  tabBtn: {
-    padding: '8px 16px',
-    borderRadius: 6,
-    border: '1px solid',
-    fontSize: 13,
-    cursor: 'pointer',
-    transition: 'all 0.15s',
-  } as React.CSSProperties,
-  input: {
-    padding: '12px 16px',
-    border: '1px solid #ddd',
-    borderRadius: 8,
-    fontSize: 14,
-    outline: 'none',
-    width: '100%',
-    boxSizing: 'border-box',
-    background: '#fff',
-  },
-  inputHint: {
-    fontSize: 12,
-    color: '#999',
-    margin: '6px 0 0',
   },
   radioGroup: {
     display: 'flex',
