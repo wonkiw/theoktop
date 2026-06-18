@@ -9,7 +9,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!admin) return res.status(401).json({ success: false, message: '관리자 권한이 필요합니다.' })
 
   const { status } = req.query
-  const statusVal = typeof status === 'string' && status !== 'all' ? status : null
+
+  // 'completed' 탭: 관리자가 답변한 상태(reviewing, completed) 모두 포함
+  // 'pending' 탭: 아직 답변 전(pending)
+  // 'all': 전체
+  let whereClause = ''
+  if (status === 'pending') {
+    whereClause = `WHERE i.status = 'pending'`
+  } else if (status === 'completed') {
+    whereClause = `WHERE i.status IN ('reviewing', 'completed')`
+  }
 
   try {
     const [listRes, pendingRes] = await Promise.all([
@@ -22,10 +31,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
          FROM inquiries i
          JOIN users u ON u.id = i.user_id
          LEFT JOIN inquiry_replies ir ON ir.inquiry_id = i.id
-         WHERE ($1::text IS NULL OR i.status = $1)
+         ${whereClause}
          GROUP BY i.id, u.name, u.email
-         ORDER BY i.created_at DESC`,
-        [statusVal]
+         ORDER BY i.created_at DESC`
       ),
       getPool().query(`SELECT COUNT(*) FROM inquiries WHERE status = 'pending'`),
     ])

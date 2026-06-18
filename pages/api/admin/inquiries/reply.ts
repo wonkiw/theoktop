@@ -63,11 +63,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const { subject, html } = inquiryReplyTemplate(target.name || '고객', '', replyContent)
         const result = await sendEmail({ to: target.email, subject, html })
         emailSent = result.success
-        if (!result.success) emailError = result.error ?? '이메일 발송 실패'
+        if (!result.success) {
+          const raw = result.error ?? '이메일 발송 실패'
+          emailError = /domain|not verified|verify/i.test(raw)
+            ? '이메일 발송 설정이 필요합니다 (Resend 도메인 미인증)'
+            : raw
+        }
       }
     } catch (emailErr: any) {
       console.error('[reply] email error:', emailErr)
-      emailError = emailErr.message
+      const raw: string = emailErr.message ?? ''
+      emailError = /domain|not verified|verify/i.test(raw)
+        ? '이메일 발송 설정이 필요합니다 (Resend 도메인 미인증)'
+        : raw
     }
   }
 

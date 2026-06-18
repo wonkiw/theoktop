@@ -62,7 +62,7 @@ function InquiryModal({
   const [answer, setAnswer]     = useState(inquiry.answer ?? '')
   const [sending, setSending]   = useState(false)
   const [toast, setToast]       = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-  const isPending               = inquiry.status !== 'completed'
+  const isPending               = inquiry.status === 'pending'
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type })
@@ -80,11 +80,7 @@ function InquiryModal({
       })
       const data = await res.json()
       if (res.ok) {
-        if (sendEmail) {
-          showToast(data.emailSent ? '답변 저장 + 이메일 발송 완료' : '저장됨 (이메일 발송 실패)', data.emailSent ? 'success' : 'error')
-        } else {
-          showToast('답변이 저장되었습니다.', 'success')
-        }
+        showToast(data.message ?? '답변이 저장되었습니다.', 'success')
         setTimeout(() => { onReplied(inquiry.id); onClose() }, 1500)
       } else {
         showToast(data.message ?? '저장에 실패했습니다.', 'error')
