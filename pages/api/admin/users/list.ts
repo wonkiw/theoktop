@@ -10,13 +10,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const admin = await requireAdmin(req.headers.authorization)
   if (!admin) return res.status(401).json({ success: false, message: '관리자 권한이 필요합니다.' })
 
-  const { search, page = '1' } = req.query
+  const { search, page = '1', status = 'active' } = req.query
   const pageNum   = Math.max(1, Number(page))
   const offset    = (pageNum - 1) * PAGE_SIZE
   const searchVal = typeof search === 'string' && search.trim() ? `%${search.trim()}%` : null
+  const isWithdrawn = status === 'withdrawn'
 
   try {
-    const where = `WHERE u.role = 'user' AND ($1::text IS NULL OR u.name ILIKE $1 OR u.email ILIKE $1)`
+    const statusFilter = isWithdrawn
+      ? `u.status = 'withdrawn'`
+      : `u.role = 'user' AND (u.status = 'active' OR u.status IS NULL)`
+
+    const where = `WHERE ${statusFilter} AND ($1::text IS NULL OR u.name ILIKE $1 OR u.email ILIKE $1)`
+
+    const orderBy = isWithdrawn ? 'u.withdrawn_at DESC' : 'u.created_at DESC'
 
     const [countRes, listRes] = await Promise.all([
       getPool().query(
@@ -26,11 +33,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       getPool().query(
         `SELECT
            u.id, u.name, u.email, u.phone, u.provider, u.role, u.created_at,
+           u.status, u.withdrawn_at, u.withdraw_reason,
            (SELECT COUNT(*)::int FROM inquiries WHERE user_id = u.id) AS inquiry_count,
            (SELECT COUNT(*)::int FROM orders WHERE user_id = u.id) AS order_count
          FROM users u
          ${where}
-         ORDER BY u.created_at DESC
+         ORDER BY ${orderBy}
          LIMIT $2 OFFSET $3`,
         [searchVal, PAGE_SIZE, offset]
       ),

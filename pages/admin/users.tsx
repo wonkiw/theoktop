@@ -14,6 +14,10 @@ interface UserRow {
   role: string
   created_at: string
   order_count: number
+  inquiry_count: number
+  status: string | null
+  withdrawn_at: string | null
+  withdraw_reason: string | null
 }
 
 interface Order {
@@ -49,6 +53,10 @@ const PROVIDER_LABEL: Record<string, string> = {
   kakao:  '카카오',
   naver:  '네이버',
   oauth:  'OAuth',
+}
+
+function getProviderLabel(provider: string) {
+  return PROVIDER_LABEL[provider] ?? provider
 }
 
 const PROVIDER_STYLE: Record<string, { bg: string; color: string }> = {
@@ -258,6 +266,7 @@ function UserModal({
 /* ── Main Page ── */
 export default function AdminUsers() {
   const router = useRouter()
+  const [activeTab, setActiveTab]   = useState<'active' | 'withdrawn'>('active')
   const [users, setUsers]           = useState<UserRow[]>([])
   const [total, setTotal]           = useState(0)
   const [page, setPage]             = useState(1)
@@ -268,9 +277,9 @@ export default function AdminUsers() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  const fetchUsers = useCallback(async (tk: string, q: string, pg: number) => {
+  const fetchUsers = useCallback(async (tk: string, q: string, pg: number, tab: 'active' | 'withdrawn') => {
     setLoading(true)
-    const params = new URLSearchParams({ page: String(pg) })
+    const params = new URLSearchParams({ page: String(pg), status: tab })
     if (q) params.set('search', q)
     const res = await fetch(`/api/admin/users/list?${params}`, {
       headers: { Authorization: `Bearer ${tk}` },
@@ -287,14 +296,21 @@ export default function AdminUsers() {
     getSupabaseClient().auth.getSession().then(({ data: { session } }) => {
       if (!session) { router.replace('/admin/login'); return }
       setToken(session.access_token)
-      fetchUsers(session.access_token, '', 1)
+      fetchUsers(session.access_token, '', 1, 'active')
     })
   }, [router, fetchUsers])
 
   useEffect(() => {
     if (!token) return
-    fetchUsers(token, search, page)
-  }, [search, page, token, fetchUsers])
+    fetchUsers(token, search, page, activeTab)
+  }, [search, page, activeTab, token, fetchUsers])
+
+  const handleTabChange = (tab: 'active' | 'withdrawn') => {
+    setActiveTab(tab)
+    setPage(1)
+    setSearch('')
+    setSearchInput('')
+  }
 
   const handleSearchChange = (v: string) => {
     setSearchInput(v)
@@ -347,6 +363,34 @@ export default function AdminUsers() {
             </div>
           </div>
 
+          {/* ── 탭 ── */}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <button
+              onClick={() => handleTabChange('active')}
+              style={{
+                padding: '8px 20px', borderRadius: 8, border: '1px solid',
+                borderColor: activeTab === 'active' ? '#111' : '#ddd',
+                background: activeTab === 'active' ? '#111' : '#fff',
+                color: activeTab === 'active' ? '#fff' : '#333',
+                fontSize: 14, cursor: 'pointer', fontWeight: activeTab === 'active' ? 600 : 400,
+              }}
+            >
+              활성 회원
+            </button>
+            <button
+              onClick={() => handleTabChange('withdrawn')}
+              style={{
+                padding: '8px 20px', borderRadius: 8, border: '1px solid',
+                borderColor: activeTab === 'withdrawn' ? '#e74c3c' : '#ddd',
+                background: activeTab === 'withdrawn' ? '#e74c3c' : '#fff',
+                color: activeTab === 'withdrawn' ? '#fff' : '#333',
+                fontSize: 14, cursor: 'pointer', fontWeight: activeTab === 'withdrawn' ? 600 : 400,
+              }}
+            >
+              탈퇴 회원
+            </button>
+          </div>
+
           {/* ── 검색 ── */}
           <div style={s.searchWrap}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="2"
@@ -364,65 +408,124 @@ export default function AdminUsers() {
 
           {/* ── 테이블 ── */}
           <div style={s.tableWrap}>
-            <table style={s.table}>
-              <thead>
-                <tr>
-                  {['이름', '이메일', '전화번호', '가입방법', '가입일', '의뢰 수'].map(h => (
-                    <th key={h} style={s.th}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {loading ? (
-                  Array.from({ length: 8 }).map((_, i) => (
-                    <tr key={i}>
-                      {[100, 200, 130, 70, 100, 50].map((w, j) => (
-                        <td key={j} style={s.td}>
-                          <div style={{ height: 14, width: w, borderRadius: 4, background: 'linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%)', backgroundSize: '200% 100%' }} />
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : users.length === 0 ? (
+            {activeTab === 'active' ? (
+              <table style={s.table}>
+                <thead>
                   <tr>
-                    <td colSpan={6} style={{ ...s.td, textAlign: 'center', padding: '48px', color: '#bbb' }}>
-                      검색 결과가 없습니다.
-                    </td>
+                    {['이름', '이메일', '전화번호', '가입방법', '가입일', '의뢰 수'].map(h => (
+                      <th key={h} style={s.th}>{h}</th>
+                    ))}
                   </tr>
-                ) : (
-                  users.map(u => {
-                    const prov = PROVIDER_STYLE[u.provider] ?? PROVIDER_STYLE.email
-                    return (
-                      <tr
-                        key={u.id}
-                        className="user-row"
-                        style={{ ...s.tr, cursor: 'pointer' }}
-                        onClick={() => setSelectedId(u.id)}
-                      >
-                        <td style={{ ...s.td, fontWeight: 600 }}>{u.name}</td>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    Array.from({ length: 8 }).map((_, i) => (
+                      <tr key={i}>
+                        {[100, 200, 130, 70, 100, 50].map((w, j) => (
+                          <td key={j} style={s.td}>
+                            <div style={{ height: 14, width: w, borderRadius: 4, background: 'linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%)', backgroundSize: '200% 100%' }} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : users.length === 0 ? (
+                    <tr>
+                      <td colSpan={6} style={{ ...s.td, textAlign: 'center', padding: '48px', color: '#bbb' }}>
+                        검색 결과가 없습니다.
+                      </td>
+                    </tr>
+                  ) : (
+                    users.map(u => {
+                      const prov = PROVIDER_STYLE[u.provider] ?? PROVIDER_STYLE.email
+                      return (
+                        <tr
+                          key={u.id}
+                          className="user-row"
+                          style={{ ...s.tr, cursor: 'pointer' }}
+                          onClick={() => setSelectedId(u.id)}
+                        >
+                          <td style={{ ...s.td, fontWeight: 600 }}>{u.name}</td>
+                          <td style={{ ...s.td, color: '#555' }}>{u.email}</td>
+                          <td style={{ ...s.td, color: '#888' }}>{u.phone ?? '—'}</td>
+                          <td style={s.td}>
+                            <span style={{ ...s.badge, background: prov.bg, color: prov.color }}>
+                              {getProviderLabel(u.provider)}
+                            </span>
+                          </td>
+                          <td style={{ ...s.td, color: '#888', fontSize: 13 }}>{formatDate(u.created_at)}</td>
+                          <td style={{ ...s.td, textAlign: 'center' as const }}>
+                            {u.order_count > 0 ? (
+                              <span style={{ ...s.badge, background: '#EDE7F6', color: '#4527A0' }}>
+                                {u.order_count}건
+                              </span>
+                            ) : (
+                              <span style={{ color: '#ccc', fontSize: 13 }}>—</span>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
+                </tbody>
+              </table>
+            ) : (
+              <table style={s.table}>
+                <thead>
+                  <tr>
+                    {['이름', '이메일', '가입방법', '탈퇴 날짜', '탈퇴 사유', '의뢰 수', '문의 수'].map(h => (
+                      <th key={h} style={s.th}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    Array.from({ length: 8 }).map((_, i) => (
+                      <tr key={i}>
+                        {[100, 200, 70, 100, 150, 50, 50].map((w, j) => (
+                          <td key={j} style={s.td}>
+                            <div style={{ height: 14, width: w, borderRadius: 4, background: 'linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%)', backgroundSize: '200% 100%' }} />
+                          </td>
+                        ))}
+                      </tr>
+                    ))
+                  ) : users.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ ...s.td, textAlign: 'center', padding: '48px', color: '#bbb' }}>
+                        탈퇴 회원이 없습니다.
+                      </td>
+                    </tr>
+                  ) : (
+                    users.map(u => (
+                      <tr key={u.id} style={s.tr}>
+                        <td style={{ ...s.td, fontWeight: 600 }}>{u.name || '—'}</td>
                         <td style={{ ...s.td, color: '#555' }}>{u.email}</td>
-                        <td style={{ ...s.td, color: '#888' }}>{u.phone ?? '—'}</td>
                         <td style={s.td}>
-                          <span style={{ ...s.badge, background: prov.bg, color: prov.color }}>
-                            {PROVIDER_LABEL[u.provider] ?? u.provider}
+                          <span style={{ ...s.badge, ...(PROVIDER_STYLE[u.provider] ?? PROVIDER_STYLE.email) }}>
+                            {getProviderLabel(u.provider)}
                           </span>
                         </td>
-                        <td style={{ ...s.td, color: '#888', fontSize: 13 }}>{formatDate(u.created_at)}</td>
+                        <td style={{ ...s.td, color: '#888', fontSize: 13 }}>
+                          {u.withdrawn_at ? formatDate(u.withdrawn_at) : '—'}
+                        </td>
+                        <td style={{ ...s.td, color: '#666', fontSize: 13, maxWidth: 200 }}>
+                          {u.withdraw_reason || '—'}
+                        </td>
                         <td style={{ ...s.td, textAlign: 'center' as const }}>
-                          {u.order_count > 0 ? (
-                            <span style={{ ...s.badge, background: '#EDE7F6', color: '#4527A0' }}>
-                              {u.order_count}건
-                            </span>
-                          ) : (
-                            <span style={{ color: '#ccc', fontSize: 13 }}>—</span>
-                          )}
+                          {u.order_count > 0
+                            ? <span style={{ ...s.badge, background: '#EDE7F6', color: '#4527A0' }}>{u.order_count}건</span>
+                            : <span style={{ color: '#ccc', fontSize: 13 }}>—</span>}
+                        </td>
+                        <td style={{ ...s.td, textAlign: 'center' as const }}>
+                          {u.inquiry_count > 0
+                            ? <span style={{ ...s.badge, background: '#E3F2FD', color: '#1565C0' }}>{u.inquiry_count}건</span>
+                            : <span style={{ color: '#ccc', fontSize: 13 }}>—</span>}
                         </td>
                       </tr>
-                    )
-                  })
-                )}
-              </tbody>
-            </table>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
 
           {/* ── 페이지네이션 ── */}

@@ -71,6 +71,9 @@ export default function MyPage({ user }: { user: { email?: string; name?: string
   const [page, setPage]         = useState(1)
   const [typeFilter, setTypeFilter] = useState('전체')
   const [userName, setUserName]  = useState('')
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false)
+  const [withdrawReason, setWithdrawReason] = useState('')
+  const [withdrawing, setWithdrawing] = useState(false)
 
   useEffect(() => {
     getSupabaseClient().auth.getSession().then(({ data: { session } }) => {
@@ -123,6 +126,42 @@ export default function MyPage({ user }: { user: { email?: string; name?: string
 
   const handlePeriod = (p: Period) => { setPeriod(p); setPage(1) }
   const handleType   = (t: string)  => { setTypeFilter(t); setPage(1) }
+
+  const handleWithdraw = async () => {
+    if (!confirm('정말 탈퇴하시겠습니까?\n탈퇴 후 즉시 재가입이 가능합니다.')) return
+
+    setWithdrawing(true)
+    try {
+      document.cookie.split(';').forEach(cookie => {
+        const name = cookie.split('=')[0].trim()
+        if (name.includes('sb-') || name.includes('supabase')) {
+          document.cookie = `${name}=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT`
+          document.cookie = `${name}=; Path=/; Domain=.theoktop.com; Expires=Thu, 01 Jan 1970 00:00:00 GMT`
+        }
+      })
+
+      const res = await fetch('/api/mypage/withdraw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: withdrawReason }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        alert('탈퇴 처리 중 오류: ' + data.error)
+        return
+      }
+
+      alert('회원탈퇴가 완료되었습니다.\n이용해 주셔서 감사합니다.')
+      window.location.href = '/'
+    } catch {
+      alert('오류가 발생했습니다. 다시 시도해주세요.')
+    } finally {
+      setWithdrawing(false)
+      setShowWithdrawModal(false)
+    }
+  }
 
   const handleDownload = async (docId: string, fileName: string) => {
     try {
@@ -323,6 +362,67 @@ export default function MyPage({ user }: { user: { email?: string; name?: string
           <Link href="/mypage/inquiries" style={s.bottomLink}>💬 상담 내역</Link>
           <Link href="/mypage/orders"    style={s.bottomLink}>📋 의뢰 현황</Link>
           <Link href="/mypage/documents" style={s.bottomLink}>📁 문서 관리</Link>
+        </div>
+
+        {/* 회원탈퇴 */}
+        <div style={{ marginTop: 48, paddingTop: 24, borderTop: '1px solid #f0f0f0' }}>
+          {!showWithdrawModal ? (
+            <button
+              onClick={() => setShowWithdrawModal(true)}
+              style={{
+                background: 'none', border: 'none', color: '#bbb',
+                fontSize: 13, cursor: 'pointer', textDecoration: 'underline', padding: 0,
+              }}
+            >
+              회원탈퇴
+            </button>
+          ) : (
+            <div style={{
+              background: '#fff9f9', border: '1px solid #ffdddd',
+              borderRadius: 12, padding: 24, maxWidth: 480,
+            }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, color: '#333', marginBottom: 8 }}>
+                회원탈퇴 신청
+              </h3>
+              <p style={{ fontSize: 13, color: '#666', lineHeight: 1.6, marginBottom: 16 }}>
+                탈퇴 후에도 기존 의뢰 및 상담 내용은 관리자에게 보관됩니다.<br />
+                탈퇴 후 <strong>즉시 동일 계정으로 재가입</strong>이 가능합니다.
+              </p>
+              <textarea
+                value={withdrawReason}
+                onChange={e => setWithdrawReason(e.target.value)}
+                placeholder="탈퇴 사유를 입력해주세요 (선택사항)"
+                rows={3}
+                style={{
+                  width: '100%', padding: '10px 12px',
+                  border: '1px solid #ddd', borderRadius: 8,
+                  fontSize: 13, resize: 'none', boxSizing: 'border-box',
+                  marginBottom: 16, outline: 'none',
+                }}
+              />
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button
+                  onClick={handleWithdraw}
+                  disabled={withdrawing}
+                  style={{
+                    padding: '10px 20px', background: '#e74c3c', color: '#fff',
+                    border: 'none', borderRadius: 8, fontSize: 14, fontWeight: 600, cursor: 'pointer',
+                  }}
+                >
+                  {withdrawing ? '처리 중...' : '탈퇴 확인'}
+                </button>
+                <button
+                  onClick={() => { setShowWithdrawModal(false); setWithdrawReason('') }}
+                  style={{
+                    padding: '10px 20px', background: '#f5f5f5', color: '#333',
+                    border: 'none', borderRadius: 8, fontSize: 14, cursor: 'pointer',
+                  }}
+                >
+                  취소
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
       </div>
