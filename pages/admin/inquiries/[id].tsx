@@ -167,11 +167,7 @@ export default function AdminInquiryDetail({
           answer: answer.trim(),
           answered_at: new Date().toISOString(),
         }))
-        if (sendEmail) {
-          showToast(data.emailSent ? '답변 저장 + 이메일 발송 완료' : '저장됨 (이메일 발송 실패)', data.emailSent ? 'success' : 'error')
-        } else {
-          showToast('답변이 저장되었습니다.', 'success')
-        }
+        showToast(data.message ?? '답변이 저장되었습니다.', 'success')
       } else {
         showToast(data.message ?? '저장 실패', 'error')
       }

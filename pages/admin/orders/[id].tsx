@@ -150,7 +150,7 @@ export default function OrderDetailPage() {
     })
     if (res.ok) {
       const data = await res.json()
-      showToast(data.emailSent ? '피드백이 발송되었습니다.' : '저장되었으나 이메일 발송에 실패했습니다.', data.emailSent ? 'success' : 'error')
+      showToast(data.message ?? '피드백이 저장되었습니다.', 'success')
       setFeedback('')
     } else {
       showToast('발송에 실패했습니다.', 'error')

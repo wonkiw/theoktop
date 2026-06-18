@@ -18,22 +18,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const pool = getPool()
 
-  // 1. 답변 저장 (항상 실행, 실패 시 500 반환)
+  // 1. 답변 저장 (필수, 실패 시 500 반환)
   try {
     await pool.query(
       `INSERT INTO inquiry_replies (inquiry_id, author_id, author_role, content, file_url, file_name)
        VALUES ($1, $2, 'admin', $3, $4, $5)`,
       [inquiry_id, admin.id, replyContent, file_url ?? null, file_name ?? null]
     )
+  } catch (saveErr: any) {
+    console.error('[reply] insert error:', saveErr)
+    return res.status(500).json({ success: false, message: '저장 중 오류: ' + saveErr.message })
+  }
+
+  // 1-2. inquiries 상태/답변 업데이트 (best-effort, 실패해도 200 반환)
+  try {
     await pool.query(
       `UPDATE inquiries
        SET status = 'reviewing', answer = $2, answered_at = NOW(), updated_at = NOW()
        WHERE id = $1`,
       [inquiry_id, replyContent]
     )
-  } catch (saveErr: any) {
-    console.error('[reply] save error:', saveErr)
-    return res.status(500).json({ success: false, message: '저장 중 오류: ' + saveErr.message })
+  } catch (updateErr: any) {
+    console.error('[reply] update status error (non-fatal):', updateErr.message)
   }
 
   // 2. 이메일 발송 (선택적, 실패해도 200 반환)
