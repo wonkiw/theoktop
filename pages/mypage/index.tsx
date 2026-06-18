@@ -132,6 +132,32 @@ export default function MyPage({ user }: { user: { email?: string; name?: string
 
     setWithdrawing(true)
     try {
+      const supabase = getSupabaseClient()
+      const { data: { session } } = await supabase.auth.getSession()
+
+      if (!session) {
+        alert('이미 로그아웃 상태입니다.')
+        window.location.href = '/'
+        return
+      }
+
+      const res = await fetch('/api/mypage/withdraw', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ reason: withdrawReason }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        alert('탈퇴 처리 중 오류: ' + (data.error || '알 수 없는 오류'))
+        return
+      }
+
+      // 클라이언트 쿠키 및 세션 정리
       document.cookie.split(';').forEach(cookie => {
         const name = cookie.split('=')[0].trim()
         if (name.includes('sb-') || name.includes('supabase')) {
@@ -139,19 +165,7 @@ export default function MyPage({ user }: { user: { email?: string; name?: string
           document.cookie = `${name}=; Path=/; Domain=.theoktop.com; Expires=Thu, 01 Jan 1970 00:00:00 GMT`
         }
       })
-
-      const res = await fetch('/api/mypage/withdraw', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: withdrawReason }),
-      })
-
-      const data = await res.json()
-
-      if (!res.ok) {
-        alert('탈퇴 처리 중 오류: ' + data.error)
-        return
-      }
+      await supabase.auth.signOut()
 
       alert('회원탈퇴가 완료되었습니다.\n이용해 주셔서 감사합니다.')
       window.location.href = '/'
