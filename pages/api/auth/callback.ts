@@ -37,16 +37,44 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         user.user_metadata?.preferred_username ??
         ''
 
-      await pool.query(
-        `INSERT INTO users (supabase_uid, email, name, role, provider)
-         VALUES ($1, $2, $3, 'user', $4)
-         ON CONFLICT (supabase_uid) DO UPDATE
-         SET email = EXCLUDED.email,
-             name = CASE WHEN users.name = ''
-                         THEN EXCLUDED.name
-                         ELSE users.name END`,
-        [user.id, user.email ?? '', name, provider]
+      // 탈퇴 회원 재가입 여부 확인 (이메일 기준)
+      const { rows: emailRows } = await pool.query(
+        'SELECT id, status FROM users WHERE email = $1',
+        [user.email ?? '']
       )
+
+      if (emailRows.length > 0 && emailRows[0].status === 'withdrawn') {
+        // 탈퇴 회원 재가입 → active 복구
+        await pool.query(
+          `UPDATE users
+           SET status = 'active',
+               supabase_uid = $1,
+               withdrawn_at = NULL,
+               withdraw_reason = NULL,
+               provider = $2,
+               name = COALESCE(NULLIF($3, ''), name)
+           WHERE email = $4`,
+          [user.id, provider, name, user.email ?? '']
+        )
+      } else if (emailRows.length === 0) {
+        // 신규 회원
+        await pool.query(
+          `INSERT INTO users (supabase_uid, email, name, role, provider)
+           VALUES ($1, $2, $3, 'user', $4)
+           ON CONFLICT (supabase_uid) DO UPDATE
+           SET email = EXCLUDED.email,
+               name = CASE WHEN users.name = ''
+                           THEN EXCLUDED.name
+                           ELSE users.name END`,
+          [user.id, user.email ?? '', name, provider]
+        )
+      } else {
+        // 기존 active 회원 → supabase_uid/email 동기화
+        await pool.query(
+          `UPDATE users SET supabase_uid = $1 WHERE email = $2`,
+          [user.id, user.email ?? '']
+        )
+      }
 
       const { rows } = await pool.query(
         'SELECT role FROM users WHERE supabase_uid = $1',

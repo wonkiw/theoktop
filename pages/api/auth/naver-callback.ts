@@ -87,13 +87,40 @@ export default async function handler(
 
     // 4. RDS users 테이블에 저장
     const pool = getPool()
-    await pool.query(
-      `INSERT INTO users (supabase_uid, email, name, role, provider)
-       VALUES ($1, $2, $3, 'user', 'naver')
-       ON CONFLICT (supabase_uid) DO UPDATE
-       SET email = EXCLUDED.email`,
-      [userId, naverUser.email, naverUser.name || '']
+
+    const { rows: emailRows } = await pool.query(
+      'SELECT id, status FROM users WHERE email = $1',
+      [naverUser.email]
     )
+
+    if (emailRows.length > 0 && emailRows[0].status === 'withdrawn') {
+      // 탈퇴 회원 재가입 → active 복구
+      await pool.query(
+        `UPDATE users
+         SET status = 'active',
+             supabase_uid = $1,
+             withdrawn_at = NULL,
+             withdraw_reason = NULL,
+             provider = 'naver'
+         WHERE email = $2`,
+        [userId, naverUser.email]
+      )
+    } else if (emailRows.length === 0) {
+      // 신규 회원
+      await pool.query(
+        `INSERT INTO users (supabase_uid, email, name, role, provider)
+         VALUES ($1, $2, $3, 'user', 'naver')
+         ON CONFLICT (supabase_uid) DO UPDATE
+         SET email = EXCLUDED.email`,
+        [userId, naverUser.email, naverUser.name || '']
+      )
+    } else {
+      // 기존 active 회원 → supabase_uid 동기화
+      await pool.query(
+        `UPDATE users SET supabase_uid = $1 WHERE email = $2`,
+        [userId, naverUser.email]
+      )
+    }
 
     // 5. 매직링크로 자동 로그인
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ||

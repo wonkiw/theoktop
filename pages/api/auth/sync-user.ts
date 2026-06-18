@@ -14,16 +14,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const pool = getPool()
-    await pool.query(
-      `INSERT INTO users (supabase_uid, email, name, role, provider)
-       VALUES ($1, $2, $3, 'user', $4)
-       ON CONFLICT (supabase_uid) DO UPDATE
-       SET email = EXCLUDED.email,
-           name = CASE WHEN users.name = ''
-                       THEN EXCLUDED.name
-                       ELSE users.name END`,
-      [supabase_uid, email, name || '', provider || 'oauth']
+
+    const { rows: emailRows } = await pool.query(
+      'SELECT id, status FROM users WHERE email = $1',
+      [email]
     )
+
+    if (emailRows.length > 0 && emailRows[0].status === 'withdrawn') {
+      // 탈퇴 회원 재가입 → active 복구
+      await pool.query(
+        `UPDATE users
+         SET status = 'active',
+             supabase_uid = $1,
+             withdrawn_at = NULL,
+             withdraw_reason = NULL
+         WHERE email = $2`,
+        [supabase_uid, email]
+      )
+    } else {
+      await pool.query(
+        `INSERT INTO users (supabase_uid, email, name, role, provider)
+         VALUES ($1, $2, $3, 'user', $4)
+         ON CONFLICT (supabase_uid) DO UPDATE
+         SET email = EXCLUDED.email,
+             name = CASE WHEN users.name = ''
+                         THEN EXCLUDED.name
+                         ELSE users.name END`,
+        [supabase_uid, email, name || '', provider || 'oauth']
+      )
+    }
+
     return res.status(200).json({ ok: true })
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'unknown error'

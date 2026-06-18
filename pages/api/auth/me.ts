@@ -32,12 +32,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ''
       const provider = user.app_metadata?.provider ?? 'email'
 
-      await pool.query(
-        `INSERT INTO users (supabase_uid, email, name, role, provider)
-         VALUES ($1, $2, $3, 'user', $4)
-         ON CONFLICT (supabase_uid) DO NOTHING`,
-        [user.id, user.email ?? '', name, provider]
+      // 탈퇴 회원 재가입 여부 확인 (이메일 기준)
+      const { rows: emailRows } = await pool.query(
+        'SELECT id, status FROM users WHERE email = $1',
+        [user.email ?? '']
       )
+
+      if (emailRows.length > 0 && emailRows[0].status === 'withdrawn') {
+        // 탈퇴 회원 재가입 → active 복구
+        await pool.query(
+          `UPDATE users
+           SET status = 'active',
+               supabase_uid = $1,
+               withdrawn_at = NULL,
+               withdraw_reason = NULL
+           WHERE email = $2`,
+          [user.id, user.email ?? '']
+        )
+      } else if (emailRows.length === 0) {
+        // 신규 회원
+        await pool.query(
+          `INSERT INTO users (supabase_uid, email, name, role, provider)
+           VALUES ($1, $2, $3, 'user', $4)
+           ON CONFLICT (supabase_uid) DO NOTHING`,
+          [user.id, user.email ?? '', name, provider]
+        )
+      }
+
       const result = await pool.query(
         'SELECT * FROM users WHERE supabase_uid = $1',
         [user.id]
