@@ -37,14 +37,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         user.user_metadata?.preferred_username ??
         ''
 
-      // 탈퇴 회원 재가입 여부 확인 (이메일 기준)
-      const { rows: emailRows } = await pool.query(
-        'SELECT id, status FROM users WHERE email = $1',
-        [user.email ?? '']
+      const email = user.email ?? ''
+
+      // supabase_uid로 먼저 확인 (정상 로그인, 재로그인)
+      const { rows: uidRows } = await pool.query(
+        'SELECT id, status FROM users WHERE supabase_uid = $1',
+        [user.id]
       )
 
-      if (emailRows.length > 0 && emailRows[0].status === 'withdrawn') {
-        // 탈퇴 회원 재가입 → active 복구
+      // 이메일로도 확인 (탈퇴 후 재가입 - supabase_uid가 바뀐 경우)
+      const { rows: emailRows } = await pool.query(
+        'SELECT id, status, supabase_uid FROM users WHERE email = $1',
+        [email]
+      )
+
+      if (uidRows.length > 0) {
+        // supabase_uid로 찾은 경우: 기존 유저 → active 상태 보장 및 이메일 동기화
+        await pool.query(
+          `UPDATE users
+           SET status = 'active',
+               email = $1,
+               withdrawn_at = NULL,
+               withdraw_reason = NULL
+           WHERE supabase_uid = $2`,
+          [email, user.id]
+        )
+      } else if (emailRows.length > 0) {
+        // 이메일로 찾은 경우: 탈퇴 후 재가입 (supabase_uid 교체)
         await pool.query(
           `UPDATE users
            SET status = 'active',
@@ -52,27 +71,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                withdrawn_at = NULL,
                withdraw_reason = NULL,
                provider = $2,
-               name = COALESCE(NULLIF($3, ''), name)
+               name = CASE WHEN name = '' OR name IS NULL THEN $3 ELSE name END
            WHERE email = $4`,
-          [user.id, provider, name, user.email ?? '']
-        )
-      } else if (emailRows.length === 0) {
-        // 신규 회원
-        await pool.query(
-          `INSERT INTO users (supabase_uid, email, name, role, provider)
-           VALUES ($1, $2, $3, 'user', $4)
-           ON CONFLICT (supabase_uid) DO UPDATE
-           SET email = EXCLUDED.email,
-               name = CASE WHEN users.name = ''
-                           THEN EXCLUDED.name
-                           ELSE users.name END`,
-          [user.id, user.email ?? '', name, provider]
+          [user.id, provider, name, email]
         )
       } else {
-        // 기존 active 회원 → supabase_uid/email 동기화
+        // 완전히 새 회원
         await pool.query(
-          `UPDATE users SET supabase_uid = $1 WHERE email = $2`,
-          [user.id, user.email ?? '']
+          `INSERT INTO users (supabase_uid, email, name, role, provider, status)
+           VALUES ($1, $2, $3, 'user', $4, 'active')`,
+          [user.id, email, name, provider]
         )
       }
 

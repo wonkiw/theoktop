@@ -29,7 +29,10 @@ export default function AuthCallback() {
 
           await fetch('/api/auth/sync-user', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${data.session.access_token}`,
+            },
             body: JSON.stringify({
               supabase_uid: user.id,
               email: user.email || '',

@@ -15,18 +15,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const pool = getPool()
+
+  // 1. 피드백 저장 (항상 실행, 실패 시 500 반환)
   try {
-    const { rows } = await pool.query(
-      `SELECT o.building_address, u.name AS customer_name, u.email AS customer_email
-       FROM orders o
-       JOIN users u ON u.id = o.user_id
-       WHERE o.id = $1`,
-      [order_id]
-    )
-    if (!rows.length) return res.status(404).json({ success: false, message: '의뢰를 찾을 수 없습니다.' })
-
-    const { building_address, customer_name, customer_email } = rows[0]
-
     await pool.query(
       `UPDATE orders
        SET admin_memo = CASE
@@ -37,24 +28,53 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
        WHERE id = $1`,
       [order_id, content.trim()]
     )
-
-    let emailSent = false
-    let emailError: string | null = null
-    if (sendEmailFlag) {
-      try {
-        const { subject, html } = orderFeedbackTemplate(customer_name, building_address, content.trim())
-        const result = await sendEmail({ to: customer_email, subject, html })
-        emailSent = result.success
-        if (!result.success) emailError = '이메일 발송 실패'
-      } catch (err) {
-        console.error('[admin/orders/feedback] email error:', err)
-        emailError = err instanceof Error ? err.message : '이메일 발송 오류'
-      }
-    }
-
-    return res.status(200).json({ success: true, emailSent, emailError })
-  } catch (err) {
-    console.error('[admin/orders/feedback]', err)
-    return res.status(500).json({ success: false, message: '피드백 저장 중 오류가 발생했습니다.' })
+  } catch (saveErr: any) {
+    console.error('[feedback] save error:', saveErr)
+    return res.status(500).json({ success: false, message: '저장 중 오류: ' + saveErr.message })
   }
+
+  // 2. 이메일 발송 (선택적, 실패해도 200 반환)
+  let emailSent = false
+  let emailError: string | null = null
+
+  if (sendEmailFlag) {
+    try {
+      const { rows } = await pool.query(
+        `SELECT o.building_address, u.name AS customer_name, u.email AS customer_email
+         FROM orders o
+         LEFT JOIN users u ON u.id = o.user_id
+         WHERE o.id = $1`,
+        [order_id]
+      )
+      const target = rows[0]
+
+      if (!target?.customer_email) {
+        emailError = '수신자 이메일 없음'
+      } else {
+        const { subject, html } = orderFeedbackTemplate(
+          target.customer_name || '고객',
+          target.building_address || '',
+          content.trim()
+        )
+        const result = await sendEmail({ to: target.customer_email, subject, html })
+        emailSent = result.success
+        if (!result.success) emailError = result.error ?? '이메일 발송 실패'
+      }
+    } catch (emailErr: any) {
+      console.error('[feedback] email error:', emailErr)
+      emailError = emailErr.message
+    }
+  }
+
+  return res.status(200).json({
+    success: true,
+    ok: true,
+    emailSent,
+    emailError,
+    message: emailSent
+      ? '피드백이 저장되고 이메일이 발송되었습니다'
+      : emailError
+        ? `피드백이 저장되었습니다 (이메일 미발송: ${emailError})`
+        : '피드백이 저장되었습니다',
+  })
 }
