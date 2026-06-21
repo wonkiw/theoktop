@@ -1,4 +1,4 @@
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 const REGION = process.env.AWS_REGION ?? 'ap-northeast-2'
@@ -71,4 +71,29 @@ export async function getViewPresignedUrl(
 export function extractKeyFromUrl(fileUrl: string): string | null {
   const match = fileUrl.match(/\.amazonaws\.com\/(.+)$/)
   return match ? match[1] : null
+}
+
+/**
+ * 서버에서 바이너리를 직접 S3에 업로드 (관리자 이미지 업로드처럼
+ * presigned URL 왕복 없이 한 번의 API 호출로 끝내야 하는 경우에 사용)
+ */
+export async function uploadBuffer(
+  key: string,
+  buffer: Buffer,
+  contentType: string
+): Promise<{ fileUrl: string }> {
+  await s3.send(new PutObjectCommand({
+    Bucket: BUCKET,
+    Key: key,
+    Body: buffer,
+    ContentType: contentType,
+  }))
+  return { fileUrl: `https://${BUCKET}.s3.${REGION}.amazonaws.com/${key}` }
+}
+
+/**
+ * S3 객체 삭제
+ */
+export async function deleteObject(key: string): Promise<void> {
+  await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }))
 }

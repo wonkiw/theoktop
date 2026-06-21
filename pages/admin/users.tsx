@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
 import { getSupabaseClient } from '../../lib/supabase'
+import PremiumBadge from '../../components/PremiumBadge'
 
 /* ── Types ── */
 interface UserRow {
@@ -198,7 +199,10 @@ function UserModal({
           ) : (
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <h2 style={ms.userName}>{detail.user.name}</h2>
+                <h2 style={ms.userName}>
+                  {detail.user.name}
+                  {detail.user.membership_tier === 'premium' && <PremiumBadge style={{ marginLeft: 6 }} />}
+                </h2>
                 <span style={{ ...ms.provBadge, background: provStyle.bg, color: provStyle.color }}>
                   {PROVIDER_LABEL[detail.user.provider] ?? detail.user.provider}
                 </span>
@@ -481,9 +485,12 @@ export default function AdminUsers() {
             <Link href="/admin/dashboard" style={s.logo}>
               THE OKTOP <span style={s.adminBadge}>관리자</span>
             </Link>
-            <button style={s.btnLogout} className="btn-logout" onClick={handleLogout}>
-              로그아웃
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Link href="/" style={s.btnHome}>메인페이지로 이동</Link>
+              <button style={s.btnLogout} className="btn-logout" onClick={handleLogout}>
+                로그아웃
+              </button>
+            </div>
           </div>
         </header>
 
@@ -582,7 +589,7 @@ export default function AdminUsers() {
                           onClick={() => setSelectedId(u.id)}
                         >
                           <td style={{ ...s.td, fontWeight: 600 }}>
-                            {isPremium && <span style={{ color: '#B8860B', marginRight: 4 }}>★</span>}
+                            {isPremium && <PremiumBadge style={{ marginRight: 4 }} />}
                             {u.name}
                             {u.is_rejoined && (
                               <span style={{ ...s.badge, marginLeft: 6, background: '#FFF3E0', color: '#E65100' }}>
@@ -717,6 +724,7 @@ const s: Record<string, React.CSSProperties> = {
   logo: { fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 10 },
   adminBadge: { fontSize: 11, fontWeight: 500, background: 'rgba(255,255,255,0.15)', color: '#ccc', padding: '2px 8px', borderRadius: 20 },
   btnLogout: { padding: '7px 16px', background: '#333', color: '#ccc', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' },
+  btnHome: { padding: '7px 16px', background: '#333', color: '#ccc', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s', textDecoration: 'none' },
 
   main: { maxWidth: 1100, margin: '0 auto', padding: '32px 24px 64px' },
   titleRow: { marginBottom: 24 },

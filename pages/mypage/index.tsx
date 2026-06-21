@@ -6,6 +6,7 @@ import { getSupabaseClient } from '@/lib/supabase'
 import { createSSRSupabaseClient } from '@/lib/supabaseServer'
 import { getPool } from '@/lib/db'
 import MypageLayout from '@/components/MypageLayout'
+import PremiumBadge from '@/components/PremiumBadge'
 
 type Document = {
   id: string
@@ -206,7 +207,7 @@ export default function MyPage({ user }: { user: MyPageUser }) {
             <h1 style={s.title}>상담내역</h1>
             {userName && (
               <span style={s.userBadge}>
-                {userName} 님 {isPremium && <span style={{ color: '#B8860B' }}>★</span>}
+                {userName} 님 {isPremium && <PremiumBadge />}
               </span>
             )}
           </div>

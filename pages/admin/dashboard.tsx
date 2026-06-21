@@ -58,6 +58,19 @@ const MENU_CARDS = [
     roles: ['admin', 'superadmin'],
   },
   {
+    href: '/admin/construction-sites',
+    label: '시공현장 관리',
+    desc: '시공현장 게시물을 등록하고 메인 노출을 관리합니다',
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 21h18"/>
+        <path d="M5 21V7l7-4 7 4v14"/>
+        <path d="M9 21v-6h6v6"/>
+      </svg>
+    ),
+    roles: ['admin', 'superadmin'],
+  },
+  {
     href: '/admin/accounts',
     label: '관리자 계정',
     desc: '관리자 계정을 생성하고 권한을 관리합니다',
@@ -175,6 +188,7 @@ export default function AdminDashboard() {
                   <span style={s.adminEmail}>{adminInfo.email}</span>
                 </div>
               )}
+              <Link href="/" style={s.btnHome}>메인페이지로 이동</Link>
               <button
                 style={s.btnLogout}
                 className="btn-logout"
@@ -373,6 +387,19 @@ const s: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     transition: 'background 0.15s',
     whiteSpace: 'nowrap' as const,
+  },
+  btnHome: {
+    padding: '7px 16px',
+    background: '#333',
+    color: '#ccc',
+    border: 'none',
+    borderRadius: 6,
+    fontSize: 12,
+    fontWeight: 500,
+    cursor: 'pointer',
+    transition: 'background 0.15s',
+    whiteSpace: 'nowrap' as const,
+    textDecoration: 'none',
   },
 
   // Main

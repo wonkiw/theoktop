@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import MypageLayout from '@/components/MypageLayout'
+import PremiumBadge from '@/components/PremiumBadge'
 
 type UserProfile = {
   name: string
@@ -164,7 +165,7 @@ export default function ProfilePage() {
               <Row
                 label="이름"
                 value={profile?.name ?? '-'}
-                suffix={profile?.membership_tier === 'premium' ? <span style={{ color: '#B8860B' }}>★</span> : null}
+                suffix={profile?.membership_tier === 'premium' ? <PremiumBadge /> : null}
               />
               <Row label="이메일"  value={profile?.email ?? '-'} />
               <Row label="전화번호" value={profile?.phone ?? '미등록'} />

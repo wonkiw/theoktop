@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/router'
+import Link from 'next/link'
 import { getSupabaseClient } from '../../lib/supabase'
 
 interface AdminAccount {
@@ -156,6 +157,9 @@ export default function AdminAccountsPage() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <span style={{ color: '#ccc', fontSize: 13 }}>{adminName}</span>
           <span style={{ color: '#666', fontSize: 13 }}>{adminEmail}</span>
+          <Link href="/" style={{ background: 'transparent', border: '1px solid #444', color: '#aaa', padding: '5px 14px', borderRadius: 4, cursor: 'pointer', fontSize: 13, textDecoration: 'none' }}>
+            메인페이지로 이동
+          </Link>
           <button onClick={handleLogout} style={{ background: 'transparent', border: '1px solid #444', color: '#aaa', padding: '5px 14px', borderRadius: 4, cursor: 'pointer', fontSize: 13 }}>
             로그아웃
           </button>

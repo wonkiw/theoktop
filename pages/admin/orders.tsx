@@ -129,9 +129,12 @@ export default function AdminOrders() {
             <Link href="/admin/dashboard" style={s.logo}>
               THE OKTOP <span style={s.adminBadge}>관리자</span>
             </Link>
-            <button style={s.btnLogout} className="btn-logout" onClick={handleLogout}>
-              로그아웃
-            </button>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Link href="/" style={s.btnHome}>메인페이지로 이동</Link>
+              <button style={s.btnLogout} className="btn-logout" onClick={handleLogout}>
+                로그아웃
+              </button>
+            </div>
           </div>
         </header>
 
@@ -281,6 +284,7 @@ const s: Record<string, React.CSSProperties> = {
   logo: { fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 10 },
   adminBadge: { fontSize: 11, fontWeight: 500, background: 'rgba(255,255,255,0.15)', color: '#ccc', padding: '2px 8px', borderRadius: 20 },
   btnLogout: { padding: '7px 16px', background: '#333', color: '#ccc', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s' },
+  btnHome: { padding: '7px 16px', background: '#333', color: '#ccc', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', transition: 'background 0.15s', textDecoration: 'none' },
 
   main: { maxWidth: 1200, margin: '0 auto', padding: '32px 24px 64px' },
   titleRow: { display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 24, flexWrap: 'wrap' as const },

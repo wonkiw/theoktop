@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { getSupabaseClient } from '../lib/supabase'
+import PremiumBadge from './PremiumBadge'
 
 const GOLD = '#D4AF5C'
 const DARK_BG = 'rgba(15,15,13,0.97)'
@@ -8,6 +9,8 @@ const DARK_BG = 'rgba(15,15,13,0.97)'
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [userRole, setUserRole]     = useState<string | null>(null)
+  const [userName, setUserName]     = useState<string | null>(null)
+  const [isPremium, setIsPremium]   = useState(false)
   const [ready, setReady]           = useState(false)
   const [menuOpen, setMenuOpen]     = useState(false)
 
@@ -19,7 +22,11 @@ export default function Header() {
       if (session) {
         fetch('/api/auth/me')
           .then(res => res.json())
-          .then(data => setUserRole(data.role))
+          .then(data => {
+            setUserRole(data.role)
+            setUserName(data.name)
+            setIsPremium(data.membership_tier === 'premium')
+          })
           .catch(() => setUserRole('user'))
       }
       setReady(true)
@@ -27,7 +34,11 @@ export default function Header() {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
       setIsLoggedIn(!!session)
-      if (!session) setUserRole(null)
+      if (!session) {
+        setUserRole(null)
+        setUserName(null)
+        setIsPremium(false)
+      }
     })
 
     return () => subscription.unsubscribe()
@@ -148,6 +159,11 @@ export default function Header() {
           <nav className="oktop-header-nav" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             {ready && (isLoggedIn ? (
               <>
+                {userName && (
+                  <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: 13, marginRight: 4 }}>
+                    {userName}님 {isPremium && <PremiumBadge />}
+                  </span>
+                )}
                 <Link href="/mypage" style={{
                   padding: '8px 16px',
                   border: '1px solid rgba(212,175,92,0.6)',
@@ -229,6 +245,11 @@ export default function Header() {
           <div style={{ background: 'rgba(18,18,15,0.98)', borderTop: `1px solid rgba(212,175,92,0.2)` }}>
             {ready && (isLoggedIn ? (
               <>
+                {userName && (
+                  <div style={{ padding: '12px 20px', color: GOLD, fontSize: 14, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                    {userName}님 {isPremium && <PremiumBadge />}
+                  </div>
+                )}
                 <button
                   onClick={() => { closeMenu(); window.location.href = '/mypage' }}
                   style={mobileBtn()}

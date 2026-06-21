@@ -437,235 +437,24 @@
 
       <!-- 프로젝트 카드 -->
       <div class="projects-grid" id="projectsGrid">
-
-        <!-- Project 1: 시공중 87% -->
-        <article class="project-card" data-status="ongoing" data-modal="modal-1"
-                 data-animate data-delay="0" role="button" tabindex="0"
-                 aria-label="동작구 사당동 옥탑 상세보기">
-          <div class="project-img">
-            <img src="/theoktop_no01.png" alt="동작구 사당동 옥탑" style="width:100%;height:100%;object-fit:cover;display:block;">
-            <div class="project-badges">
-              <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
-              <span class="project-tag">시공중</span>
-            </div>
-          </div>
-          <div class="project-info">
-            <h3>동작구 사당동 옥탑</h3>
-            <div class="project-meta">
-              <span>📍 서울시 동작구 사당동</span>
-              <span>📐 26.24㎡</span>
-            </div>
-            <div class="progress-wrap">
-              <div class="progress-header">
-                <span>공정 진행률</span><strong>87%</strong>
-              </div>
-              <div class="progress-track">
-                <div class="progress-fill" data-progress="87"></div>
-              </div>
-            </div>
-            <p class="project-schedule">예정 준공: <strong>2026년 9월</strong></p>
-          </div>
-        </article>
-
-        <!-- Project 2: 시공중 85% -->
-        <article class="project-card" data-status="ongoing" data-modal="modal-2"
-                 data-animate data-delay="1" role="button" tabindex="0"
-                 aria-label="동작구 사당동 옥탑 상세보기">
-          <div class="project-img">
-            <img src="/theoktop_no02.png" alt="동작구 사당동 옥탑" style="width:100%;height:100%;object-fit:cover;display:block;">
-            <div class="project-badges">
-              <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
-              <span class="project-tag">시공중</span>
-            </div>
-          </div>
-          <div class="project-info">
-            <h3>동작구 사당동 옥탑</h3>
-            <div class="project-meta">
-              <span>📍 서울시 동작구 사당동</span>
-              <span>📐 26.18㎡</span>
-            </div>
-            <div class="progress-wrap">
-              <div class="progress-header">
-                <span>공정 진행률</span><strong>85%</strong>
-              </div>
-              <div class="progress-track">
-                <div class="progress-fill" data-progress="85"></div>
-              </div>
-            </div>
-            <p class="project-schedule">예정 준공: <strong>2026년 11월</strong></p>
-          </div>
-        </article>
-
-        <!-- Project 3: 시공중 70% -->
-        <article class="project-card" data-status="ongoing" data-modal="modal-3"
-                 data-animate data-delay="2" role="button" tabindex="0"
-                 aria-label="동작구 흑석동 옥탑 상세보기">
-          <div class="project-img">
-            <div class="project-placeholder">
-              <span>PROJECT 03</span>
-              <p>동작구 흑석동</p>
-            </div>
-            <div class="project-badges">
-              <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
-              <span class="project-tag">시공중</span>
-            </div>
-          </div>
-          <div class="project-info">
-            <h3>동작구 흑석동 옥탑</h3>
-            <div class="project-meta">
-              <span>📍 서울시 동작구 흑석동</span>
-              <span>📐 26㎡</span>
-            </div>
-            <div class="progress-wrap">
-              <div class="progress-header">
-                <span>공정 진행률</span><strong>70%</strong>
-              </div>
-              <div class="progress-track">
-                <div class="progress-fill" data-progress="70"></div>
-              </div>
-            </div>
-            <p class="project-schedule">예정 준공: <strong>2026년 12월</strong></p>
-          </div>
-        </article>
-
+        <!-- main.js가 /api/construction-sites/featured 응답으로 카드를 동적으로 채웁니다 -->
       </div>
 
     </div>
 
-    <!-- 모달 오버레이 -->
+    <!-- 모달 오버레이: 시공현장은 1개의 재사용 모달을 main.js가 클릭된 카드 데이터로 채웁니다 -->
     <div class="modal-overlay" id="modalOverlay" hidden aria-modal="true" role="dialog">
-
-      <!-- Modal 1 -->
-      <div class="modal" id="modal-1" hidden>
+      <div class="modal" id="siteModal" hidden>
         <button class="modal-close" aria-label="닫기">✕</button>
         <div class="modal-body">
-          <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
-          <h2 class="modal-title">동작구 사당동 옥탑</h2>
-          <div class="modal-gallery">
-            <div class="gallery-item gallery-photo">
-              <img src="/images/01_00.png" alt="시공 현장 사진 1">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/01_01.png" alt="시공 현장 사진 2">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/01_03.jpg" alt="시공 현장 사진 3">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/01_04.jpg" alt="시공 현장 사진 4">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/01_05.jpg" alt="시공 현장 사진 5">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/01_07.jpg" alt="시공 현장 사진 6">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/01_08.jpg" alt="시공 현장 사진 7">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/01_09.jpg" alt="시공 현장 사진 8">
-              <div class="gallery-badge">시공중</div>
-            </div>
-          </div>
-          <div class="modal-details">
-            <div class="detail-row"><span>위치</span><strong>서울시 동작구 사당동</strong></div>
-            <div class="detail-row"><span>면적</span><strong>26.24㎡</strong></div>
-            <div class="detail-row"><span>유형</span><strong>시공중 (사용승인 완료)</strong></div>
-            <div class="detail-row"><span>공정률</span><strong>87%</strong></div>
-            <div class="detail-row"><span>용적율</span><strong>249.89 → 260.56 (증 : 10.67%)</strong></div>
-            <div class="detail-row"><span>예정 준공</span><strong>2026년 9월</strong></div>
-          </div>
-          <p class="modal-desc">동작구 사당동 옥탑을 쾌적한 공간으로 리노베이션하는 프로젝트입니다. 단열 보강, 내외부 마감재 교체, 루프탑 테라스 조성을 포함한 전면 리모델링을 진행 중이며 현재 공정률 87%를 달성하였습니다.</p>
+          <span class="status-badge ongoing" id="siteModalStatusBadge"><span class="status-dot"></span><span id="siteModalStatusText">시공중</span></span>
+          <h2 class="modal-title" id="siteModalTitle"></h2>
+          <div class="modal-gallery" id="siteModalGallery"></div>
+          <div class="modal-details" id="siteModalDetails"></div>
+          <p class="modal-desc" id="siteModalDesc"></p>
           <a href="#consultation" class="btn-cta modal-cta">상담 신청하기</a>
         </div>
       </div>
-
-      <!-- Modal 2 -->
-      <div class="modal" id="modal-2" hidden>
-        <button class="modal-close" aria-label="닫기">✕</button>
-        <div class="modal-body">
-          <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
-          <h2 class="modal-title">동작구 사당동 옥탑</h2>
-          <div class="modal-gallery">
-            <div class="gallery-item gallery-photo">
-              <img src="/images/02_02.jpg" alt="시공 현장 사진 1">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/02_03.jpg" alt="시공 현장 사진 2">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/02_04.jpg" alt="시공 현장 사진 3">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/02_05.jpg" alt="시공 현장 사진 4">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/02_06.jpg" alt="시공 현장 사진 5">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/02_07.jpg" alt="시공 현장 사진 6">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/02_08.jpg" alt="시공 현장 사진 7">
-              <div class="gallery-badge">시공중</div>
-            </div>
-          </div>
-          <div class="modal-details">
-            <div class="detail-row"><span>위치</span><strong>서울시 동작구 사당동</strong></div>
-            <div class="detail-row"><span>면적</span><strong>26.18㎡</strong></div>
-            <div class="detail-row"><span>유형</span><strong>시공중 (사용승인 완료)</strong></div>
-            <div class="detail-row"><span>공정률</span><strong>85%</strong></div>
-            <div class="detail-row"><span>용적율</span><strong>249.89 → 260.56 (증 : 10.67%)</strong></div>
-            <div class="detail-row"><span>예정 준공</span><strong>2026년 11월</strong></div>
-          </div>
-          <p class="modal-desc">동작구 사당동 옥탑을 쾌적하고 실용적인 공간으로 탈바꿈하는 프로젝트입니다. 단열 및 방수 보강, 내부 마감재 교체, 생활 편의시설 설치를 포함한 전면 리모델링을 진행 중이며 현재 공정률 85%를 달성하였습니다.</p>
-          <a href="#consultation" class="btn-cta modal-cta">상담 신청하기</a>
-        </div>
-      </div>
-
-      <!-- Modal 3 -->
-      <div class="modal" id="modal-3" hidden>
-        <button class="modal-close" aria-label="닫기">✕</button>
-        <div class="modal-body">
-          <span class="status-badge ongoing"><span class="status-dot"></span>시공중</span>
-          <h2 class="modal-title">동작구 흑석동 옥탑</h2>
-          <div class="modal-gallery">
-            <div class="gallery-item gallery-photo">
-              <img src="/images/03_00.jpg" alt="시공 현장 사진 1">
-              <div class="gallery-badge">시공중</div>
-            </div>
-            <div class="gallery-item gallery-photo">
-              <img src="/images/03_01.jpg" alt="시공 현장 사진 2">
-              <div class="gallery-badge">시공중</div>
-            </div>
-          </div>
-          <div class="modal-details">
-            <div class="detail-row"><span>위치</span><strong>서울시 동작구 흑석동</strong></div>
-            <div class="detail-row"><span>면적</span><strong>26㎡</strong></div>
-            <div class="detail-row"><span>유형</span><strong>시공중 (사용승인 완료)</strong></div>
-            <div class="detail-row"><span>공정률</span><strong>70%</strong></div>
-            <div class="detail-row"><span>용적율</span><strong>198.38 → 236.86 (증 : 38.48%)</strong></div>
-            <div class="detail-row"><span>예정 준공</span><strong>2026년 12월</strong></div>
-          </div>
-          <p class="modal-desc">동작구 흑석동 옥탑을 현대적인 공간으로 리노베이션하는 프로젝트입니다. 단열 및 방수 보강, 내외부 마감 교체, 루프탑 테라스 조성을 포함한 전면 리모델링을 진행 중이며 현재 공정률 70%를 달성하였습니다.</p>
-          <a href="#consultation" class="btn-cta modal-cta">상담 신청하기</a>
-        </div>
-      </div>
-
     </div>
   </section>
 

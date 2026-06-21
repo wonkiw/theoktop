@@ -194,6 +194,7 @@ export default function AdminInquiryDetail({
             <Link href="/admin/dashboard" style={s.logo}>
               THE OKTOP <span style={s.adminBadge}>관리자</span>
             </Link>
+            <Link href="/" style={s.btnHome}>메인페이지로 이동</Link>
           </div>
         </header>
 
@@ -451,7 +452,8 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
 const s: Record<string, React.CSSProperties> = {
   root: { minHeight: '100vh', background: '#f4f4f4' },
   header: { background: '#111', padding: '0 24px' },
-  headerInner: { maxWidth: 1200, margin: '0 auto', height: 60, display: 'flex', alignItems: 'center' },
+  headerInner: { maxWidth: 1200, margin: '0 auto', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  btnHome: { padding: '7px 16px', background: '#333', color: '#ccc', border: 'none', borderRadius: 6, fontSize: 12, cursor: 'pointer', textDecoration: 'none' },
   logo: { fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 10 },
   adminBadge: { fontSize: 11, fontWeight: 500, background: 'rgba(255,255,255,0.15)', color: '#ccc', padding: '2px 8px', borderRadius: 20 },
 

@@ -237,27 +237,6 @@
 
 
   /* ─────────────────────────────────────────────────────────────
-     PROJECT FILTER BUTTONS
-  ───────────────────────────────────────────────────────────── */
-
-  const filterBtns  = document.querySelectorAll('.filter-btn');
-  const projectCards = document.querySelectorAll('.project-card');
-
-  filterBtns.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      filterBtns.forEach(function (b) { b.classList.remove('active'); });
-      btn.classList.add('active');
-
-      const filter = btn.getAttribute('data-filter');
-      projectCards.forEach(function (card) {
-        const show = filter === 'all' || card.getAttribute('data-status') === filter;
-        card.style.display = show ? '' : 'none';
-      });
-    });
-  });
-
-
-  /* ─────────────────────────────────────────────────────────────
      PROGRESS BAR ANIMATION (on scroll into view)
   ───────────────────────────────────────────────────────────── */
 
@@ -274,10 +253,6 @@
       progressObserver.unobserve(fill);
     });
   }, { threshold: 0.3 });
-
-  document.querySelectorAll('.progress-fill').forEach(function (el) {
-    progressObserver.observe(el);
-  });
 
 
   /* ─────────────────────────────────────────────────────────────
@@ -301,17 +276,6 @@
     document.body.style.overflow = '';
   }
 
-  projectCards.forEach(function (card) {
-    function activate() {
-      const modalId = card.getAttribute('data-modal');
-      if (modalId) openModal(modalId);
-    }
-    card.addEventListener('click', activate);
-    card.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
-    });
-  });
-
   if (modalOverlay) {
     modalOverlay.addEventListener('click', function (e) {
       if (e.target === modalOverlay) closeModal();
@@ -327,6 +291,216 @@
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape' && modalOverlay && !modalOverlay.hidden) closeModal();
   });
+
+
+  /* ─────────────────────────────────────────────────────────────
+     CONSTRUCTION SITES — DB(construction_sites)에서 불러와 동적으로 렌더링
+  ───────────────────────────────────────────────────────────── */
+
+  const projectsGrid = document.getElementById('projectsGrid');
+  const filterBtns   = document.querySelectorAll('.filter-btn');
+
+  const CONSTRUCTION_STATUS_LABEL = { ongoing: '시공중', completed: '완공' };
+  const CONSTRUCTION_STATUS_FILTER_KEY = { ongoing: 'ongoing', completed: 'complete' };
+
+  filterBtns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      filterBtns.forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      const filter = btn.getAttribute('data-filter');
+      document.querySelectorAll('#projectsGrid .project-card').forEach(function (card) {
+        const show = filter === 'all' || card.getAttribute('data-status') === filter;
+        card.style.display = show ? '' : 'none';
+      });
+    });
+  });
+
+  function renderProjectCards(sites) {
+    if (!projectsGrid) return;
+    projectsGrid.textContent = '';
+
+    sites.forEach(function (site, index) {
+      const filterKey   = CONSTRUCTION_STATUS_FILTER_KEY[site.construction_status] || 'ongoing';
+      const statusLabel = CONSTRUCTION_STATUS_LABEL[site.construction_status] || '시공중';
+      const thumb = site.images && site.images.length ? site.images[0].url : '';
+
+      const card = document.createElement('article');
+      card.className = 'project-card';
+      card.setAttribute('data-status', filterKey);
+      card.setAttribute('data-animate', '');
+      card.setAttribute('data-delay', String(index));
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', site.title + ' 상세보기');
+
+      const imgWrap = document.createElement('div');
+      imgWrap.className = 'project-img';
+      if (thumb) {
+        const img = document.createElement('img');
+        img.src = thumb;
+        img.alt = site.title;
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+        img.style.display = 'block';
+        imgWrap.appendChild(img);
+      }
+      const badges = document.createElement('div');
+      badges.className = 'project-badges';
+      const statusBadge = document.createElement('span');
+      statusBadge.className = 'status-badge ' + filterKey;
+      statusBadge.appendChild(document.createElement('span')).className = 'status-dot';
+      statusBadge.appendChild(document.createTextNode(statusLabel));
+      const tag = document.createElement('span');
+      tag.className = 'project-tag';
+      tag.textContent = statusLabel;
+      badges.appendChild(statusBadge);
+      badges.appendChild(tag);
+      imgWrap.appendChild(badges);
+      card.appendChild(imgWrap);
+
+      const info = document.createElement('div');
+      info.className = 'project-info';
+
+      const h3 = document.createElement('h3');
+      h3.textContent = site.title;
+      info.appendChild(h3);
+
+      const meta = document.createElement('div');
+      meta.className = 'project-meta';
+      if (site.address) {
+        const addrSpan = document.createElement('span');
+        addrSpan.textContent = '📍 ' + site.address;
+        meta.appendChild(addrSpan);
+      }
+      if (site.area != null) {
+        const areaSpan = document.createElement('span');
+        areaSpan.textContent = '📐 ' + site.area + (site.area_unit || '㎡');
+        meta.appendChild(areaSpan);
+      }
+      info.appendChild(meta);
+
+      if (site.progress_rate != null) {
+        const progressWrap = document.createElement('div');
+        progressWrap.className = 'progress-wrap';
+        const progressHeader = document.createElement('div');
+        progressHeader.className = 'progress-header';
+        const lbl = document.createElement('span');
+        lbl.textContent = '공정 진행률';
+        const pct = document.createElement('strong');
+        pct.textContent = site.progress_rate + '%';
+        progressHeader.appendChild(lbl);
+        progressHeader.appendChild(pct);
+        const track = document.createElement('div');
+        track.className = 'progress-track';
+        const fill = document.createElement('div');
+        fill.className = 'progress-fill';
+        fill.setAttribute('data-progress', String(site.progress_rate));
+        track.appendChild(fill);
+        progressWrap.appendChild(progressHeader);
+        progressWrap.appendChild(track);
+        info.appendChild(progressWrap);
+      }
+
+      card.appendChild(info);
+
+      function activate() { openSiteModal(site); }
+      card.addEventListener('click', activate);
+      card.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); activate(); }
+      });
+
+      projectsGrid.appendChild(card);
+      revealObserver.observe(card);
+    });
+
+    document.querySelectorAll('#projectsGrid .progress-fill').forEach(function (el) {
+      progressObserver.observe(el);
+    });
+  }
+
+  function bindGalleryLightbox() {
+    document.querySelectorAll('#siteModalGallery .gallery-photo img').forEach(function (img) {
+      img.style.cursor = 'zoom-in';
+      img.addEventListener('click', function (e) {
+        e.stopPropagation();
+        openLightbox(img.src);
+      });
+    });
+  }
+
+  function openSiteModal(site) {
+    const filterKey   = CONSTRUCTION_STATUS_FILTER_KEY[site.construction_status] || 'ongoing';
+    const statusLabel = CONSTRUCTION_STATUS_LABEL[site.construction_status] || '시공중';
+
+    const statusBadge = document.getElementById('siteModalStatusBadge');
+    const statusText  = document.getElementById('siteModalStatusText');
+    const title       = document.getElementById('siteModalTitle');
+    const gallery     = document.getElementById('siteModalGallery');
+    const details     = document.getElementById('siteModalDetails');
+    const desc        = document.getElementById('siteModalDesc');
+
+    if (statusBadge) statusBadge.className = 'status-badge ' + filterKey;
+    if (statusText)  statusText.textContent = statusLabel;
+    if (title)       title.textContent = site.title;
+
+    if (gallery) {
+      gallery.textContent = '';
+      (site.images || [])
+        .slice()
+        .sort(function (a, b) { return a.order - b.order; })
+        .forEach(function (imgData, i) {
+          const item = document.createElement('div');
+          item.className = 'gallery-item gallery-photo';
+          const img = document.createElement('img');
+          img.src = imgData.url;
+          img.alt = '시공 현장 사진 ' + (i + 1);
+          const badge = document.createElement('div');
+          badge.className = 'gallery-badge';
+          badge.textContent = statusLabel;
+          item.appendChild(img);
+          item.appendChild(badge);
+          gallery.appendChild(item);
+        });
+    }
+
+    if (details) {
+      details.textContent = '';
+      const rows = [];
+      if (site.address) rows.push(['위치', site.address]);
+      if (site.area != null) rows.push(['면적', site.area + (site.area_unit || '㎡')]);
+      if (site.site_type) rows.push(['유형', site.site_type]);
+      if (site.progress_rate != null) rows.push(['공정률', site.progress_rate + '%']);
+      rows.forEach(function (pair) {
+        const row = document.createElement('div');
+        row.className = 'detail-row';
+        const span = document.createElement('span');
+        span.textContent = pair[0];
+        const strong = document.createElement('strong');
+        strong.textContent = pair[1];
+        row.appendChild(span);
+        row.appendChild(strong);
+        details.appendChild(row);
+      });
+    }
+
+    if (desc) {
+      desc.textContent = '';
+      const lines = (site.description || '').split('\n');
+      lines.forEach(function (line, i) {
+        desc.appendChild(document.createTextNode(line));
+        if (i < lines.length - 1) desc.appendChild(document.createElement('br'));
+      });
+    }
+
+    bindGalleryLightbox();
+    openModal('siteModal');
+  }
+
+  fetch('/api/construction-sites/featured')
+    .then(function (r) { return r.ok ? r.json() : { sites: [] }; })
+    .then(function (data) { renderProjectCards(data.sites || []); })
+    .catch(function () { renderProjectCards([]); });
 
 
   /* ─────────────────────────────────────────────────────────────
@@ -351,14 +525,6 @@
       document.body.style.overflow = '';
     }
   }
-
-  document.querySelectorAll('.gallery-photo img').forEach(function (img) {
-    img.style.cursor = 'zoom-in';
-    img.addEventListener('click', function (e) {
-      e.stopPropagation();
-      openLightbox(img.src);
-    });
-  });
 
   if (imgLightbox) {
     imgLightbox.addEventListener('click', closeLightbox);
@@ -742,6 +908,30 @@
     if (drawerGuest)  drawerGuest.style.display  = user ? 'none'  : 'flex';
     if (drawerLogged) drawerLogged.style.display = user ? 'flex'  : 'none';
     if (drawerName)   drawerName.textContent     = name ? name + '님' : '';
+
+    /* 프리미엄 등급(★)은 DB 조회가 필요해 비동기로 한 박자 늦게 반영 */
+    if (user && name) {
+      fetch('/api/auth/me')
+        .then(function (r) { return r.ok ? r.json() : null; })
+        .then(function (data) {
+          if (data && data.membership_tier === 'premium') {
+            renderNameWithStar(navName, name);
+            renderNameWithStar(drawerName, name);
+          }
+        })
+        .catch(function () {});
+    }
+  }
+
+  /* innerHTML 대신 DOM을 직접 구성 (name은 OAuth 닉네임 등 사용자 입력값이라 XSS 방지) */
+  function renderNameWithStar(el, name) {
+    if (!el) return;
+    el.textContent = '';
+    el.appendChild(document.createTextNode(name + '님 '));
+    var star = document.createElement('span');
+    star.style.color = '#B8860B';
+    star.textContent = '★';
+    el.appendChild(star);
   }
 
   // 로그아웃 버튼
