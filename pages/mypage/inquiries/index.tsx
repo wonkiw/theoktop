@@ -15,9 +15,9 @@ interface InquiryItem {
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  pending:   { label: '대기중', bg: '#FFF8E1', color: '#F57F17' },
-  reviewing: { label: '검토중', bg: '#E3F2FD', color: '#1565C0' },
-  completed: { label: '완료',   bg: '#E8F5E9', color: '#2E7D32' },
+  pending:   { label: '대기중',  bg: '#FFF8E1', color: '#F57F17' },
+  reviewing: { label: '답변완료', bg: '#E8F5E9', color: '#2E7D32' },
+  completed: { label: '답변완료', bg: '#E8F5E9', color: '#2E7D32' },
 }
 
 function formatDate(iso: string) {

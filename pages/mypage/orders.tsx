@@ -17,6 +17,8 @@ type Order = {
   description: string | null
   status: 'pending' | 'reviewing' | 'completed' | 'cancelled'
   created_at: string
+  admin_feedback: string | null
+  admin_feedback_at: string | null
   documents: Document[]
 }
 
@@ -167,6 +169,18 @@ export default function OrdersPage() {
                         <div style={s.detailSection}>
                           <p style={s.detailLabel}>의뢰 내용</p>
                           <p style={s.detailValue}>{order.description}</p>
+                        </div>
+                      )}
+
+                      {order.admin_feedback && (
+                        <div style={s.detailSection}>
+                          <p style={s.detailLabel}>담당자 피드백</p>
+                          <div style={s.feedbackBox}>
+                            <p style={s.feedbackText}>{order.admin_feedback}</p>
+                            {order.admin_feedback_at && (
+                              <p style={s.feedbackDate}>{formatDate(order.admin_feedback_at)}</p>
+                            )}
+                          </div>
                         </div>
                       )}
 
@@ -436,5 +450,23 @@ const s: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: 'pointer',
     flexShrink: 0,
+  },
+  feedbackBox: {
+    background: '#EFF6FF',
+    borderLeft: '4px solid #3B82F6',
+    borderRadius: '0 8px 8px 0',
+    padding: '14px 16px',
+  },
+  feedbackText: {
+    fontSize: 14,
+    color: '#1e3a5f',
+    lineHeight: 1.75,
+    margin: '0 0 8px',
+    whiteSpace: 'pre-wrap',
+  },
+  feedbackDate: {
+    fontSize: 12,
+    color: '#93c5fd',
+    margin: 0,
   },
 }

@@ -811,11 +811,8 @@
 
 
   /* ─────────────────────────────────────────────────────────────
-     SIGNUP FORM — phone verification + form submit
+     SIGNUP FORM — form submit
   ───────────────────────────────────────────────────────────── */
-
-  let phoneVerified = false;
-  let timerInterval = null;
 
   function setFieldError(id, msg) {
     const el = document.getElementById(id);
@@ -836,55 +833,6 @@
     if (inp) inp.style.borderColor = '#E57373';
     setFieldError(errId, msg);
   }
-
-  /* Send verification code */
-  document.getElementById('sendCodeBtn')?.addEventListener('click', function () {
-    const phone = document.getElementById('signupPhone')?.value.trim();
-    if (!phone || !/^01[0-9]-?\d{3,4}-?\d{4}$/.test(phone.replace(/\s/g, ''))) {
-      markInvalid('signupPhone', 'errSignupPhone', '올바른 휴대폰번호를 입력해주세요.');
-      return;
-    }
-    setFieldError('errSignupPhone', '');
-    document.getElementById('signupPhone').style.borderColor = '';
-
-    /* Show verify input and start 60s countdown */
-    const verifyGroup = document.getElementById('verifyGroup');
-    if (verifyGroup) verifyGroup.hidden = false;
-
-    clearInterval(timerInterval);
-    let secs = 60;
-    const timerEl = document.getElementById('verifyTimer');
-    function updateTimer() {
-      const m = String(Math.floor(secs / 60)).padStart(2, '0');
-      const s = String(secs % 60).padStart(2, '0');
-      if (timerEl) timerEl.textContent = m + ':' + s;
-      if (secs <= 0) {
-        clearInterval(timerInterval);
-        if (timerEl) timerEl.textContent = '만료';
-        phoneVerified = false;
-      }
-      secs--;
-    }
-    updateTimer();
-    timerInterval = setInterval(updateTimer, 1000);
-    showToast('인증번호가 발송되었습니다. (테스트: 123456)', 'success');
-  });
-
-  /* Confirm verification code (mock: always 123456) */
-  document.getElementById('confirmCodeBtn')?.addEventListener('click', function () {
-    const code = document.getElementById('verifyCode')?.value.trim();
-    if (code === '123456') {
-      phoneVerified = true;
-      clearInterval(timerInterval);
-      const timerEl = document.getElementById('verifyTimer');
-      if (timerEl) timerEl.textContent = '✓';
-      document.getElementById('verifyCode').style.borderColor = '#4CAF50';
-      setFieldError('errVerifyCode', '');
-      showToast('인증이 완료되었습니다.', 'success');
-    } else {
-      markInvalid('verifyCode', 'errVerifyCode', '인증번호가 일치하지 않습니다.');
-    }
-  });
 
   /* Signup form submit */
   /* ── 로그인 폼 ─────────────────────────────────────────────── */
@@ -955,8 +903,9 @@
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       markInvalid('signupEmail', 'errSignupEmail', '올바른 이메일 주소를 입력해주세요.'); ok = false;
     }
-    if (!phone) { markInvalid('signupPhone', 'errSignupPhone', '휴대폰번호를 입력해주세요.'); ok = false; }
-    if (!phoneVerified) { setFieldError('errSignupPhone', '휴대폰 인증을 완료해주세요.'); ok = false; }
+    if (!phone || !/^01[0-9]-?\d{3,4}-?\d{4}$/.test(phone.replace(/\s/g, ''))) {
+      markInvalid('signupPhone', 'errSignupPhone', '올바른 휴대폰번호를 입력해주세요.'); ok = false;
+    }
     if (!pw || pw.length < 8) {
       markInvalid('signupPw', 'errSignupPw', '비밀번호는 8자 이상 입력해주세요.'); ok = false;
     }
@@ -972,7 +921,7 @@
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, password: pw, name: name }),
+        body: JSON.stringify({ email: email, password: pw, name: name, phone: phone }),
       });
       const data = await res.json();
 

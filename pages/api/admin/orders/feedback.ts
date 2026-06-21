@@ -24,6 +24,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
          WHEN admin_memo IS NULL OR admin_memo = '' THEN $2::text
          ELSE admin_memo || E'\n---\n' || $2::text
        END,
+       admin_feedback = $2::text,
+       admin_feedback_at = NOW(),
+       status = 'completed',
        updated_at = NOW()
        WHERE id = $1`,
       [order_id, content.trim()]

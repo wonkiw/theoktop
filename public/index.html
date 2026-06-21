@@ -894,25 +894,9 @@
 
               <div class="form-group">
                 <label for="signupPhone">휴대폰번호 <span class="required">*</span></label>
-                <div class="input-action-row">
-                  <input type="tel" id="signupPhone" name="signupPhone"
-                         placeholder="010-0000-0000" required autocomplete="tel">
-                  <button type="button" class="btn-inline" id="sendCodeBtn">인증번호 받기</button>
-                </div>
+                <input type="tel" id="signupPhone" name="signupPhone"
+                       placeholder="010-0000-0000" required autocomplete="tel">
                 <span class="field-error" id="errSignupPhone"></span>
-              </div>
-
-              <div class="form-group" id="verifyGroup" hidden>
-                <label for="verifyCode">인증번호 <span class="required">*</span></label>
-                <div class="input-action-row">
-                  <div class="input-timer-wrap">
-                    <input type="text" id="verifyCode" name="verifyCode"
-                           placeholder="인증번호 6자리" maxlength="6" inputmode="numeric">
-                    <span class="verify-timer" id="verifyTimer">01:00</span>
-                  </div>
-                  <button type="button" class="btn-inline" id="confirmCodeBtn">확인</button>
-                </div>
-                <span class="field-error" id="errVerifyCode"></span>
               </div>
 
               <div class="form-group">

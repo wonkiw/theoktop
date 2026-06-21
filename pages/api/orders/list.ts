@@ -53,6 +53,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       `SELECT
          o.id, o.building_address, o.building_detail,
          o.order_type, o.description, o.status, o.created_at,
+         o.admin_feedback, o.admin_feedback_at,
          COALESCE(
            JSON_AGG(
              JSON_BUILD_OBJECT(

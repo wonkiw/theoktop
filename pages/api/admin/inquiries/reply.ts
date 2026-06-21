@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     await pool.query(
       `UPDATE inquiries
-       SET status = 'reviewing', answer = $2, answered_at = NOW(), updated_at = NOW()
+       SET status = 'completed', answer = $2, answered_at = NOW(), updated_at = NOW()
        WHERE id = $1`,
       [inquiry_id, replyContent]
     )

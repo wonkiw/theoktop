@@ -176,9 +176,9 @@ export default function Header() {
                   marginLeft: 8,
                   padding: '6px 14px',
                   background: 'transparent',
-                  border: '1px solid rgba(255,255,255,0.3)',
+                  border: '1px solid rgba(255,255,255,0.5)',
                   borderRadius: 4,
-                  color: 'rgba(255,255,255,0.7)',
+                  color: '#fff',
                   fontSize: 12,
                   cursor: 'pointer',
                   fontFamily: 'inherit',
@@ -243,7 +243,7 @@ export default function Header() {
                 </button>
                 <button
                   onClick={handleLogout}
-                  style={mobileBtn({ borderBottom: 'none', color: 'rgba(255,255,255,0.5)', fontSize: '14px', fontWeight: 400 })}
+                  style={mobileBtn({ borderBottom: 'none', fontSize: '14px', fontWeight: 400 })}
                 >
                   로그아웃
                 </button>

@@ -29,9 +29,9 @@ interface Reply {
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  pending:   { label: '대기중', bg: '#FFF8E1', color: '#F57F17' },
-  reviewing: { label: '검토중', bg: '#E3F2FD', color: '#1565C0' },
-  completed: { label: '완료',   bg: '#E8F5E9', color: '#2E7D32' },
+  pending:   { label: '대기중',  bg: '#FFF8E1', color: '#F57F17' },
+  reviewing: { label: '답변완료', bg: '#E8F5E9', color: '#2E7D32' },
+  completed: { label: '답변완료', bg: '#E8F5E9', color: '#2E7D32' },
 }
 
 function formatDate(iso: string) {
@@ -331,12 +331,14 @@ const s: Record<string, React.CSSProperties> = {
   },
 
   answerBox: {
-    background: '#f0fdf4', border: '1px solid #a7f3d0', borderRadius: 8,
-    padding: '14px 16px', fontSize: 14, color: '#333',
+    background: '#EFF6FF',
+    borderLeft: '4px solid #3B82F6',
+    borderRadius: '0 8px 8px 0',
+    padding: '14px 16px', fontSize: 14, color: '#1e3a5f',
     lineHeight: 1.75, whiteSpace: 'pre-wrap', wordBreak: 'break-word',
     marginBottom: 8,
   },
-  answerDate: { fontSize: 12, color: '#6ee7b7', margin: 0 },
+  answerDate: { fontSize: 12, color: '#93c5fd', margin: 0 },
 
   fileItem: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 },
   fileName: { fontSize: 13, color: '#444', flex: 1 },
