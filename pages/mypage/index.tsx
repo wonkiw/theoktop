@@ -60,8 +60,11 @@ function formatDateTime(iso: string) {
   return `${ymd} ${hms}`
 }
 
-export default function MyPage({ user }: { user: { email?: string; name?: string; role?: string } }) {
+type MyPageUser = { email?: string; name?: string; role?: string; membership_tier?: string }
+
+export default function MyPage({ user }: { user: MyPageUser }) {
   const router = useRouter()
+  const isPremium = user?.membership_tier === 'premium'
   const [token, setToken]       = useState('')
   const [loading, setLoading]   = useState(true)
   const [orders, setOrders]     = useState<Order[]>([])
@@ -201,13 +204,23 @@ export default function MyPage({ user }: { user: { email?: string; name?: string
         <div style={s.titleBar}>
           <div style={s.titleLeft}>
             <h1 style={s.title}>상담내역</h1>
-            {userName && <span style={s.userBadge}>{userName} 님</span>}
+            {userName && (
+              <span style={s.userBadge}>
+                {userName} 님 {isPremium && <span style={{ color: '#B8860B' }}>★</span>}
+              </span>
+            )}
           </div>
+
           <div style={s.titleRight}>
             <Link href="/mypage/new-order"   style={s.newBtn}>+ 새 상담 등록</Link>
             <Link href="/mypage/inquiries" style={s.subBtn}>상담 내역</Link>
           </div>
         </div>
+
+        {isPremium && (
+          /* TODO: 프리미엄 전용 기능 추가 예정 */
+          <></>
+        )}
 
         {/* 종류 필터 */}
         {orderTypes.length > 1 && (
@@ -701,6 +714,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
             email: session.user.email,
             name: session.user.user_metadata?.full_name || '',
             role: 'user',
+            membership_tier: 'general',
           }]
         }
 
@@ -716,6 +730,7 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
             email: session.user.email,
             name: '',
             role: 'user',
+            membership_tier: 'general',
           },
         },
       }

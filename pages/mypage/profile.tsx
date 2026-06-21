@@ -9,6 +9,7 @@ type UserProfile = {
   role: string
   provider: string
   created_at: string
+  membership_tier: string
 }
 
 const PROVIDER_LABEL: Record<string, string> = {
@@ -160,7 +161,11 @@ export default function ProfilePage() {
             </form>
           ) : (
             <dl style={s.dl}>
-              <Row label="이름"    value={profile?.name ?? '-'} />
+              <Row
+                label="이름"
+                value={profile?.name ?? '-'}
+                suffix={profile?.membership_tier === 'premium' ? <span style={{ color: '#B8860B' }}>★</span> : null}
+              />
               <Row label="이메일"  value={profile?.email ?? '-'} />
               <Row label="전화번호" value={profile?.phone ?? '미등록'} />
             </dl>
@@ -196,11 +201,11 @@ export default function ProfilePage() {
   )
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value, suffix }: { label: string; value: string; suffix?: React.ReactNode }) {
   return (
     <div style={rowS.wrap}>
       <dt style={rowS.label}>{label}</dt>
-      <dd style={rowS.value}>{value}</dd>
+      <dd style={rowS.value}>{value} {suffix}</dd>
     </div>
   )
 }

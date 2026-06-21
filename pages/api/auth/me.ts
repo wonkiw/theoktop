@@ -66,6 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       role:        u.role,
       supabase_uid: u.supabase_uid,
       provider:    u.provider,
+      membership_tier: u.membership_tier,
     })
   } catch (err) {
     console.error('[api/auth/me] error:', err)

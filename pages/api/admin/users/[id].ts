@@ -15,7 +15,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const [userRes, ordersRes, docsRes] = await Promise.all([
       getPool().query(
-        `SELECT id, name, email, phone, provider, role, created_at
+        `SELECT id, name, email, phone, provider, role, created_at,
+                status, membership_tier, premium_since, premium_upgraded_by
          FROM users WHERE id = $1`,
         [userId]
       ),

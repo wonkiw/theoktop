@@ -34,6 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         `SELECT
            u.id, u.name, u.email, u.phone, u.provider, u.role, u.created_at,
            u.status, u.withdrawn_at, u.withdraw_reason, u.is_rejoined,
+           u.membership_tier, u.premium_since, u.premium_upgraded_by,
            (SELECT COUNT(*)::int FROM inquiries WHERE user_id = u.id) AS inquiry_count,
            (SELECT COUNT(*)::int FROM orders WHERE user_id = u.id) AS order_count
          FROM users u

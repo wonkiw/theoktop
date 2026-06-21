@@ -19,6 +19,9 @@ interface UserRow {
   withdrawn_at: string | null
   withdraw_reason: string | null
   is_rejoined: boolean
+  membership_tier: string
+  premium_since: string | null
+  premium_upgraded_by: string | null
 }
 
 interface Order {
@@ -79,6 +82,12 @@ const STATUS_LABEL: Record<string, string> = {
   pending: '대기중', reviewing: '검토중', completed: '완료', cancelled: '취소',
 }
 
+const TIER_LABEL: Record<string, string> = { general: '일반', premium: '프리미엄' }
+const TIER_STYLE: Record<string, { bg: string; color: string }> = {
+  general: { bg: '#F5F5F5', color: '#777' },
+  premium: { bg: '#FFF8E1', color: '#B8860B' },
+}
+
 const ORDER_TYPE_LABEL: Record<string, string> = {
   new: '신규 시공', remodel: '리모델링', consult: '컨설팅 상담',
 }
@@ -94,13 +103,20 @@ function UserModal({
   userId,
   token,
   onClose,
+  onChanged,
 }: {
   userId: string
   token: string
   onClose: () => void
+  onChanged: () => void
 }) {
   const [detail, setDetail]   = useState<UserDetail | null>(null)
   const [loading, setLoading] = useState(true)
+  const [tierSaving, setTierSaving] = useState(false)
+  const [actionError, setActionError] = useState('')
+  const [showWithdrawConfirm, setShowWithdrawConfirm] = useState(false)
+  const [forceWithdrawReason, setForceWithdrawReason] = useState('')
+  const [withdrawSaving, setWithdrawSaving] = useState(false)
 
   useEffect(() => {
     fetch(`/api/admin/users/${userId}`, {
@@ -118,6 +134,54 @@ function UserModal({
   }, [onClose])
 
   const provStyle = detail ? (PROVIDER_STYLE[detail.user.provider] ?? PROVIDER_STYLE.email) : PROVIDER_STYLE.email
+
+  const handleToggleTier = async () => {
+    if (!detail) return
+    const nextTier = detail.user.membership_tier === 'premium' ? 'general' : 'premium'
+    setTierSaving(true)
+    setActionError('')
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/tier`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ tier: nextTier }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setActionError(data.message ?? '등급 변경에 실패했습니다.')
+        return
+      }
+      setDetail(prev => prev ? { ...prev, user: { ...prev.user, ...data.user } } : prev)
+      onChanged()
+    } catch {
+      setActionError('네트워크 오류가 발생했습니다.')
+    } finally {
+      setTierSaving(false)
+    }
+  }
+
+  const handleForceWithdraw = async () => {
+    setWithdrawSaving(true)
+    setActionError('')
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/force-withdraw`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ reason: forceWithdrawReason }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setActionError(data.message ?? '강제 탈퇴에 실패했습니다.')
+        return
+      }
+      onChanged()
+      onClose()
+    } catch {
+      setActionError('네트워크 오류가 발생했습니다.')
+    } finally {
+      setWithdrawSaving(false)
+    }
+  }
 
   return (
     <>
@@ -171,8 +235,78 @@ function UserModal({
                       <span style={ms.infoValue}>{value}</span>
                     </div>
                   ))}
+                  <div style={ms.infoRow}>
+                    <span style={ms.infoLabel}>등급</span>
+                    <span style={ms.infoValue}>
+                      <span style={{
+                        ...ms.badge,
+                        ...(TIER_STYLE[detail.user.membership_tier] ?? TIER_STYLE.general),
+                      }}>
+                        {TIER_LABEL[detail.user.membership_tier] ?? detail.user.membership_tier}
+                      </span>
+                      {detail.user.premium_since && (
+                        <span style={{ fontSize: 12, color: '#aaa', marginLeft: 8 }}>
+                          ({formatDate(detail.user.premium_since)}부터, {detail.user.premium_upgraded_by ?? '—'} 승급)
+                        </span>
+                      )}
+                    </span>
+                  </div>
                 </div>
               </section>
+
+              {/* 관리 액션 */}
+              {detail.user.status !== 'withdrawn' && (
+                <section style={ms.section}>
+                  <p style={ms.sectionLabel}>관리</p>
+                  {actionError && (
+                    <p style={{ fontSize: 12, color: '#E53935', marginBottom: 8 }}>{actionError}</p>
+                  )}
+                  <div style={{ display: 'flex', gap: 8, marginBottom: showWithdrawConfirm ? 12 : 0 }}>
+                    <button
+                      onClick={handleToggleTier}
+                      disabled={tierSaving}
+                      style={ms.actionBtn}
+                    >
+                      {tierSaving
+                        ? '처리 중...'
+                        : detail.user.membership_tier === 'premium' ? '일반으로 강등' : '프리미엄으로 승급'}
+                    </button>
+                    <button
+                      onClick={() => setShowWithdrawConfirm(v => !v)}
+                      style={{ ...ms.actionBtn, color: '#E53935', borderColor: '#FFCDD2' }}
+                    >
+                      강제 탈퇴
+                    </button>
+                  </div>
+
+                  {showWithdrawConfirm && (
+                    <div style={{ background: '#FFF5F5', border: '1px solid #FFCDD2', borderRadius: 8, padding: 12 }}>
+                      <input
+                        type="text"
+                        value={forceWithdrawReason}
+                        onChange={e => setForceWithdrawReason(e.target.value)}
+                        placeholder="탈퇴 사유 (선택)"
+                        style={ms.reasonInput}
+                      />
+                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                        <button
+                          onClick={handleForceWithdraw}
+                          disabled={withdrawSaving}
+                          style={{ ...ms.actionBtn, background: '#E53935', color: '#fff', border: 'none' }}
+                        >
+                          {withdrawSaving ? '처리 중...' : '탈퇴 확정'}
+                        </button>
+                        <button
+                          onClick={() => { setShowWithdrawConfirm(false); setForceWithdrawReason('') }}
+                          style={ms.actionBtn}
+                        >
+                          취소
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </section>
+              )}
 
               {/* 의뢰 목록 */}
               <section style={ms.section}>
@@ -413,7 +547,7 @@ export default function AdminUsers() {
               <table style={s.table}>
                 <thead>
                   <tr>
-                    {['이름', '이메일', '전화번호', '가입방법', '가입일', '의뢰 수'].map(h => (
+                    {['이름', '이메일', '전화번호', '가입방법', '등급', '가입일', '의뢰 수'].map(h => (
                       <th key={h} style={s.th}>{h}</th>
                     ))}
                   </tr>
@@ -422,7 +556,7 @@ export default function AdminUsers() {
                   {loading ? (
                     Array.from({ length: 8 }).map((_, i) => (
                       <tr key={i}>
-                        {[100, 200, 130, 70, 100, 50].map((w, j) => (
+                        {[100, 200, 130, 70, 70, 100, 50].map((w, j) => (
                           <td key={j} style={s.td}>
                             <div style={{ height: 14, width: w, borderRadius: 4, background: 'linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%)', backgroundSize: '200% 100%' }} />
                           </td>
@@ -431,13 +565,15 @@ export default function AdminUsers() {
                     ))
                   ) : users.length === 0 ? (
                     <tr>
-                      <td colSpan={6} style={{ ...s.td, textAlign: 'center', padding: '48px', color: '#bbb' }}>
+                      <td colSpan={7} style={{ ...s.td, textAlign: 'center', padding: '48px', color: '#bbb' }}>
                         검색 결과가 없습니다.
                       </td>
                     </tr>
                   ) : (
                     users.map(u => {
                       const prov = PROVIDER_STYLE[u.provider] ?? PROVIDER_STYLE.email
+                      const tier = TIER_STYLE[u.membership_tier] ?? TIER_STYLE.general
+                      const isPremium = u.membership_tier === 'premium'
                       return (
                         <tr
                           key={u.id}
@@ -446,6 +582,7 @@ export default function AdminUsers() {
                           onClick={() => setSelectedId(u.id)}
                         >
                           <td style={{ ...s.td, fontWeight: 600 }}>
+                            {isPremium && <span style={{ color: '#B8860B', marginRight: 4 }}>★</span>}
                             {u.name}
                             {u.is_rejoined && (
                               <span style={{ ...s.badge, marginLeft: 6, background: '#FFF3E0', color: '#E65100' }}>
@@ -458,6 +595,11 @@ export default function AdminUsers() {
                           <td style={s.td}>
                             <span style={{ ...s.badge, background: prov.bg, color: prov.color }}>
                               {getProviderLabel(u.provider)}
+                            </span>
+                          </td>
+                          <td style={s.td}>
+                            <span style={{ ...s.badge, background: tier.bg, color: tier.color }}>
+                              {TIER_LABEL[u.membership_tier] ?? u.membership_tier}
                             </span>
                           </td>
                           <td style={{ ...s.td, color: '#888', fontSize: 13 }}>{formatDate(u.created_at)}</td>
@@ -560,6 +702,7 @@ export default function AdminUsers() {
           userId={selectedId}
           token={token}
           onClose={() => setSelectedId(null)}
+          onChanged={() => fetchUsers(token, search, page, activeTab)}
         />
       )}
     </>
@@ -640,4 +783,13 @@ const ms: Record<string, React.CSSProperties> = {
 
   empty: { fontSize: 13, color: '#bbb', padding: '12px 0' },
   skel: { borderRadius: 4, background: 'linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%)', backgroundSize: '200% 100%' },
+
+  actionBtn: {
+    padding: '8px 14px', border: '1.5px solid #ddd', borderRadius: 8,
+    fontSize: 13, fontWeight: 500, cursor: 'pointer', background: '#fff', color: '#333',
+  },
+  reasonInput: {
+    width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: 6,
+    fontSize: 13, outline: 'none', boxSizing: 'border-box' as const,
+  },
 }

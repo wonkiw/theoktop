@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const client = await getPool().connect()
     try {
       const { rows } = await client.query(
-        `SELECT name, email, phone, role, provider, created_at
+        `SELECT name, email, phone, role, provider, created_at, membership_tier
          FROM users WHERE supabase_uid = $1`,
         [supabaseUid]
       )
