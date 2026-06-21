@@ -93,19 +93,7 @@ export default async function handler(
       [naverUser.email]
     )
 
-    if (emailRows.length > 0 && emailRows[0].status === 'withdrawn') {
-      // 탈퇴 회원 재가입 → active 복구
-      await pool.query(
-        `UPDATE users
-         SET status = 'active',
-             supabase_uid = $1,
-             withdrawn_at = NULL,
-             withdraw_reason = NULL,
-             provider = 'naver'
-         WHERE email = $2`,
-        [userId, naverUser.email]
-      )
-    } else if (emailRows.length === 0) {
+    if (emailRows.length === 0) {
       // 신규 회원
       await pool.query(
         `INSERT INTO users (supabase_uid, email, name, role, provider)
@@ -114,6 +102,9 @@ export default async function handler(
          SET email = EXCLUDED.email`,
         [userId, naverUser.email, naverUser.name || '']
       )
+    } else if (emailRows[0].status === 'withdrawn') {
+      // 탈퇴 회원: RDS는 건드리지 않는다. 매직링크로 세션만 발급하고,
+      // /api/auth/callback이 이메일=withdrawn 상태를 감지해 /register?from=rejoin으로 보낸다.
     } else {
       // 기존 active 회원 → supabase_uid 동기화
       await pool.query(

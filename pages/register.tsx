@@ -1,16 +1,46 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 import Head from 'next/head'
 import Link from 'next/link'
 import { getSupabaseClient } from '../lib/supabase'
 
+const PHONE_RE = /^01[0-9]-?\d{3,4}-?\d{4}$/
+
 export default function RegisterPage() {
-  const [form, setForm] = useState({ email: '', password: '', passwordConfirm: '', name: '' })
+  const router = useRouter()
+  const isRejoin = router.query.from === 'rejoin'
+
+  const [form, setForm] = useState({ email: '', password: '', passwordConfirm: '', name: '', phone: '' })
+  const [agreedTerms, setAgreedTerms] = useState(false)
   const [error, setError]     = useState('')
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [checkingSession, setCheckingSession] = useState(isRejoin)
 
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
     setForm(prev => ({ ...prev, [key]: e.target.value }))
+
+  // 탈퇴 후 OAuth 재가입: 쿼리로 넘어온 이메일/이름을 미리 채우고,
+  // 이미 카카오/네이버/구글로 인증된 세션이 있는지 확인한다.
+  useEffect(() => {
+    if (!router.isReady || !isRejoin) return
+
+    setForm(prev => ({
+      ...prev,
+      email: typeof router.query.email === 'string' ? router.query.email : prev.email,
+      name:  typeof router.query.name === 'string' ? router.query.name : prev.name,
+    }))
+
+    getSupabaseClient().auth.getSession().then(({ data }) => {
+      if (!data.session) {
+        router.replace('/login')
+        return
+      }
+      setAccessToken(data.session.access_token)
+      setCheckingSession(false)
+    })
+  }, [router.isReady, isRejoin, router])
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,33 +50,48 @@ export default function RegisterPage() {
       setError('이름을 입력해주세요.')
       return
     }
-    if (!form.email.trim()) {
+    if (!isRejoin && !form.email.trim()) {
       setError('이메일을 입력해주세요.')
       return
     }
-    if (form.password !== form.passwordConfirm) {
-      setError('비밀번호가 일치하지 않습니다.')
+    if (!form.phone.trim() || !PHONE_RE.test(form.phone.trim().replace(/\s/g, ''))) {
+      setError('올바른 휴대폰번호를 입력해주세요.')
       return
     }
-    if (form.password.length < 8) {
-      setError('비밀번호는 8자 이상이어야 합니다.')
+    if (!agreedTerms) {
+      setError('이용약관 동의가 필요합니다.')
       return
+    }
+    if (!isRejoin) {
+      if (form.password !== form.passwordConfirm) {
+        setError('비밀번호가 일치하지 않습니다.')
+        return
+      }
+      if (form.password.length < 8) {
+        setError('비밀번호는 8자 이상이어야 합니다.')
+        return
+      }
     }
 
     setLoading(true)
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: form.email,
-          password: form.password,
-          name: form.name,
-        }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(isRejoin && accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+        body: JSON.stringify(
+          isRejoin
+            ? { name: form.name, phone: form.phone, agreedTerms }
+            : { email: form.email, password: form.password, name: form.name, phone: form.phone, agreedTerms }
+        ),
       })
       const data = await res.json()
       if (!res.ok) {
         setError(data.message ?? '회원가입에 실패했습니다.')
+      } else if (isRejoin) {
+        router.replace('/mypage')
       } else {
         setSuccess(true)
       }
@@ -70,6 +115,17 @@ export default function RegisterPage() {
 
   const handleNaver = () => {
     window.location.href = '/api/auth/naver'
+  }
+
+  if (checkingSession) {
+    return (
+      <div style={s.page}>
+        <div style={s.card}>
+          <h1 style={s.logo}>THE OKTOP</h1>
+          <p style={{ textAlign: 'center', color: '#666' }}>확인 중...</p>
+        </div>
+      </div>
+    )
   }
 
   if (success) {
@@ -109,6 +165,12 @@ export default function RegisterPage() {
           <h1 style={s.logo}>THE OKTOP</h1>
           <h2 style={s.title}>회원가입</h2>
 
+          {isRejoin && (
+            <p style={s.rejoinNotice}>
+              이전에 탈퇴한 계정입니다. 정보를 다시 입력하여 재가입을 진행해주세요.
+            </p>
+          )}
+
           <form onSubmit={handleRegister} style={s.form} noValidate>
             <div style={s.group}>
               <label htmlFor="reg-name" style={s.label}>
@@ -124,6 +186,7 @@ export default function RegisterPage() {
                 className="reg-input"
                 required
                 autoComplete="name"
+                disabled={isRejoin}
               />
             </div>
             <div style={s.group}>
@@ -140,40 +203,70 @@ export default function RegisterPage() {
                 className="reg-input"
                 required
                 autoComplete="email"
+                disabled={isRejoin}
               />
             </div>
             <div style={s.group}>
-              <label htmlFor="reg-password" style={s.label}>
-                비밀번호 <span style={s.required}>*</span>
+              <label htmlFor="reg-phone" style={s.label}>
+                휴대폰번호 <span style={s.required}>*</span>
               </label>
               <input
-                id="reg-password"
-                type="password"
-                value={form.password}
-                onChange={set('password')}
-                placeholder="8자 이상 입력"
+                id="reg-phone"
+                type="tel"
+                value={form.phone}
+                onChange={set('phone')}
+                placeholder="010-0000-0000"
                 style={s.input}
                 className="reg-input"
                 required
-                autoComplete="new-password"
+                autoComplete="tel"
               />
             </div>
-            <div style={s.group}>
-              <label htmlFor="reg-password-confirm" style={s.label}>
-                비밀번호 확인 <span style={s.required}>*</span>
-              </label>
+            {!isRejoin && (
+              <>
+                <div style={s.group}>
+                  <label htmlFor="reg-password" style={s.label}>
+                    비밀번호 <span style={s.required}>*</span>
+                  </label>
+                  <input
+                    id="reg-password"
+                    type="password"
+                    value={form.password}
+                    onChange={set('password')}
+                    placeholder="8자 이상 입력"
+                    style={s.input}
+                    className="reg-input"
+                    required
+                    autoComplete="new-password"
+                  />
+                </div>
+                <div style={s.group}>
+                  <label htmlFor="reg-password-confirm" style={s.label}>
+                    비밀번호 확인 <span style={s.required}>*</span>
+                  </label>
+                  <input
+                    id="reg-password-confirm"
+                    type="password"
+                    value={form.passwordConfirm}
+                    onChange={set('passwordConfirm')}
+                    placeholder="비밀번호를 다시 입력"
+                    style={s.input}
+                    className="reg-input"
+                    required
+                    autoComplete="new-password"
+                  />
+                </div>
+              </>
+            )}
+
+            <label style={s.checkboxLabel}>
               <input
-                id="reg-password-confirm"
-                type="password"
-                value={form.passwordConfirm}
-                onChange={set('passwordConfirm')}
-                placeholder="비밀번호를 다시 입력"
-                style={s.input}
-                className="reg-input"
-                required
-                autoComplete="new-password"
+                type="checkbox"
+                checked={agreedTerms}
+                onChange={e => setAgreedTerms(e.target.checked)}
               />
-            </div>
+              <span>[필수] 이용약관 및 개인정보 수집·이용에 동의합니다</span>
+            </label>
 
             {error && <p style={s.error} role="alert">{error}</p>}
 
@@ -182,35 +275,39 @@ export default function RegisterPage() {
               style={{ ...s.btnPrimary, opacity: loading ? 0.65 : 1 }}
               disabled={loading}
             >
-              {loading ? '가입 처리 중...' : '가입 완료'}
+              {loading ? '가입 처리 중...' : isRejoin ? '재가입 완료' : '가입 완료'}
             </button>
           </form>
 
-          <div style={s.divider}>
-            <span style={s.dividerLine} />
-            <span style={s.dividerText}>또는 소셜 계정으로 가입</span>
-            <span style={s.dividerLine} />
-          </div>
+          {!isRejoin && (
+            <>
+              <div style={s.divider}>
+                <span style={s.dividerLine} />
+                <span style={s.dividerText}>또는 소셜 계정으로 가입</span>
+                <span style={s.dividerLine} />
+              </div>
 
-          <div style={s.social}>
-            <button type="button" onClick={handleGoogle} style={s.btnGoogle}>
-              <GoogleIcon />
-              구글로 가입
-            </button>
-            <button type="button" onClick={handleKakao} style={s.btnKakao}>
-              <KakaoIcon />
-              카카오로 가입
-            </button>
-            <button type="button" onClick={handleNaver} style={s.btnNaver}>
-              <NaverIcon />
-              네이버로 가입
-            </button>
-          </div>
+              <div style={s.social}>
+                <button type="button" onClick={handleGoogle} style={s.btnGoogle}>
+                  <GoogleIcon />
+                  구글로 가입
+                </button>
+                <button type="button" onClick={handleKakao} style={s.btnKakao}>
+                  <KakaoIcon />
+                  카카오로 가입
+                </button>
+                <button type="button" onClick={handleNaver} style={s.btnNaver}>
+                  <NaverIcon />
+                  네이버로 가입
+                </button>
+              </div>
 
-          <p style={s.footer}>
-            이미 회원이신가요?{' '}
-            <Link href="/login" style={s.link}>로그인</Link>
-          </p>
+              <p style={s.footer}>
+                이미 회원이신가요?{' '}
+                <Link href="/login" style={s.link}>로그인</Link>
+              </p>
+            </>
+          )}
         </div>
       </div>
     </>
@@ -280,6 +377,24 @@ const s: Record<string, React.CSSProperties> = {
     marginBottom: 28,
   },
   form: { display: 'flex', flexDirection: 'column', gap: 16 },
+  rejoinNotice: {
+    fontSize: 13,
+    color: '#8a6d00',
+    background: '#FFF8E1',
+    border: '1px solid #FFE082',
+    borderRadius: 8,
+    padding: '10px 14px',
+    margin: '0 0 20px',
+    lineHeight: 1.6,
+  },
+  checkboxLabel: {
+    display: 'flex',
+    alignItems: 'flex-start',
+    gap: 8,
+    fontSize: 13,
+    color: '#555',
+    cursor: 'pointer',
+  },
   group: { display: 'flex', flexDirection: 'column', gap: 6 },
   label: { fontSize: 13, fontWeight: 600, color: '#555', cursor: 'pointer' },
   required: { color: '#E53935' },

@@ -27,7 +27,7 @@ export default function AuthCallback() {
             ''
           const provider = user.app_metadata?.provider || 'oauth'
 
-          await fetch('/api/auth/sync-user', {
+          const syncRes = await fetch('/api/auth/sync-user', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -40,6 +40,16 @@ export default function AuthCallback() {
               provider,
             }),
           })
+
+          if (syncRes.status === 409) {
+            const syncData = await syncRes.json()
+            if (syncData.withdrawn) {
+              router.replace(
+                `/register?from=rejoin&email=${encodeURIComponent(user.email || '')}&name=${encodeURIComponent(name)}`
+              )
+              return
+            }
+          }
         } catch (err) {
           console.error('Sync user error:', err)
         }

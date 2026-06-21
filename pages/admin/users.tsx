@@ -18,6 +18,7 @@ interface UserRow {
   status: string | null
   withdrawn_at: string | null
   withdraw_reason: string | null
+  is_rejoined: boolean
 }
 
 interface Order {
@@ -444,7 +445,14 @@ export default function AdminUsers() {
                           style={{ ...s.tr, cursor: 'pointer' }}
                           onClick={() => setSelectedId(u.id)}
                         >
-                          <td style={{ ...s.td, fontWeight: 600 }}>{u.name}</td>
+                          <td style={{ ...s.td, fontWeight: 600 }}>
+                            {u.name}
+                            {u.is_rejoined && (
+                              <span style={{ ...s.badge, marginLeft: 6, background: '#FFF3E0', color: '#E65100' }}>
+                                재가입
+                              </span>
+                            )}
+                          </td>
                           <td style={{ ...s.td, color: '#555' }}>{u.email}</td>
                           <td style={{ ...s.td, color: '#888' }}>{u.phone ?? '—'}</td>
                           <td style={s.td}>

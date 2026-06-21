@@ -21,16 +21,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     )
 
     if (emailRows.length > 0 && emailRows[0].status === 'withdrawn') {
-      // 탈퇴 회원 재가입 → active 복구
-      await pool.query(
-        `UPDATE users
-         SET status = 'active',
-             supabase_uid = $1,
-             withdrawn_at = NULL,
-             withdraw_reason = NULL
-         WHERE email = $2`,
-        [supabase_uid, email]
-      )
+      // 탈퇴 회원: 자동 복구하지 않고 재가입 절차로 보내도록 클라이언트에 알린다
+      return res.status(409).json({ ok: false, withdrawn: true, email, name, provider })
     } else {
       await pool.query(
         `INSERT INTO users (supabase_uid, email, name, role, provider)
