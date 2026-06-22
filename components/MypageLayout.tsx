@@ -38,7 +38,7 @@ export default function MypageLayout({
         background: '#fff',
         borderBottom: '1px solid #eee',
         padding: '0 24px',
-        height: '56px',
+        height: '112px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -55,7 +55,7 @@ export default function MypageLayout({
           ← 메인으로
         </a>
 
-        <img src="/logo-light.png" alt="THE OKTOP" style={{ height: '28px', width: 'auto' }} />
+        <img src="/logo-light.png" alt="THE OKTOP" style={{ height: '56px', width: 'auto' }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {userName && (

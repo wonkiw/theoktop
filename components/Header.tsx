@@ -139,14 +139,14 @@ export default function Header() {
           maxWidth: 1200,
           margin: '0 auto',
           padding: '0 24px',
-          height: 60,
+          height: 120,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
         }}>
           {/* 로고 */}
           <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
-            <img src="/logo-dark.png" alt="THE OKTOP" style={{ height: '28px', width: 'auto' }} />
+            <img src="/logo-dark.png" alt="THE OKTOP" style={{ height: '56px', width: 'auto' }} />
           </Link>
 
           {/* PC 버튼 */}

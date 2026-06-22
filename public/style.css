@@ -60,7 +60,7 @@
   --font-sans:    'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
   --font-mono:    'Montserrat', 'Helvetica Neue', sans-serif;
 
-  --nav-h:        72px;
+  --nav-h:        144px;
   --container:    1200px;
   --r:            4px;
   --r-lg:         10px;
@@ -165,14 +165,14 @@ input, select, textarea { outline: none; }
 }
 
 .logo-img {
-  height: 52px;
+  height: 104px;
   width: auto;
   display: block;
   transition: opacity var(--t);
 }
 
 .logo-img-drawer {
-  height: 42px;
+  height: 84px;
 }
 
 .logo-img-light { display: none; }
