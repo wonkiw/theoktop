@@ -2533,6 +2533,23 @@ input, select, textarea { outline: none; }
 
 [data-layout="mobile"] .footer-right { align-items: flex-start; }
 
+.footer-link-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+[data-layout="mobile"] .footer-link-group { align-items: flex-start; }
+
+.footer-section-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  color: var(--gold-primary);
+}
+
 .footer-nav {
   display: flex;
   gap: 24px;
@@ -2621,18 +2638,6 @@ input, select, textarea { outline: none; }
   color: var(--text-primary);
 }
 
-.footer-legal {
-  display: flex;
-  gap: 16px;
-}
-
-.footer-legal a {
-  font-size: 12px;
-  color: var(--text-secondary);
-  transition: color var(--t);
-}
-
-.footer-legal a:hover { color: var(--gold-primary); }
 
 
 /* ═══════════════════════════════════════════════════════════════
@@ -2721,7 +2726,6 @@ input, select, textarea { outline: none; }
   .footer-info p  { font-size: 0.7rem; }   /* ~11px */
   .footer-nav a   { font-size: 0.75rem; }  /* 12px */
   .footer-copy    { font-size: 0.7rem; }   /* ~11px */
-  .footer-legal a { font-size: 0.7rem; }
 
   /* ── Hero ────────────────────────────────────────────────── */
   .hero-title       { font-size: clamp(2.25rem, 9vw, 3.5rem); }

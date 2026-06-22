@@ -81,6 +81,36 @@
     }
   })();
 
+  /* 푸터 약관 모달 (개인정보처리방침 / 이용약관) */
+  function openLegalModal(key, title) {
+    const titleEl   = document.getElementById('legalModalTitle');
+    const contentEl = document.getElementById('legalModalContent');
+    if (titleEl)   titleEl.textContent = title;
+    if (contentEl) contentEl.textContent = '불러오는 중...';
+    openModal('legalModal');
+
+    fetch('/api/site-settings?key=' + encodeURIComponent(key))
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (data) {
+        if (contentEl) {
+          contentEl.textContent = (data && data.value) ? data.value : '관리자가 내용을 등록하지 않았습니다.';
+        }
+      })
+      .catch(function () {
+        if (contentEl) contentEl.textContent = '관리자가 내용을 등록하지 않았습니다.';
+      });
+  }
+
+  document.getElementById('footerPrivacyLink')?.addEventListener('click', function (e) {
+    e.preventDefault();
+    openLegalModal('privacy_policy', '개인정보처리방침');
+  });
+
+  document.getElementById('footerTermsLink')?.addEventListener('click', function (e) {
+    e.preventDefault();
+    openLegalModal('terms_of_service', '이용약관');
+  });
+
   /* 푸터 'PC 화면' 버튼 */
   document.getElementById('pcViewBtn')?.addEventListener('click', function () {
     const next = html.getAttribute('data-layout') === 'pc' ? 'mobile' : 'pc';
