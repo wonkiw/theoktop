@@ -83,6 +83,20 @@ const MENU_CARDS = [
     ),
     roles: ['superadmin'],
   },
+  {
+    href: '/admin/site-settings',
+    label: '페이지 관리',
+    desc: '약관, 연락처, SNS 링크 등 메인페이지 정보를 관리합니다',
+    icon: (
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="9" y1="13" x2="15" y2="13"/>
+        <line x1="9" y1="17" x2="15" y2="17"/>
+      </svg>
+    ),
+    roles: ['admin', 'superadmin'],
+  },
 ]
 
 export default function AdminDashboard() {

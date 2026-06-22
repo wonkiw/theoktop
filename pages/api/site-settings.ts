@@ -1,12 +1,17 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getPool } from '../../lib/db'
 
+const ALLOWED_KEYS = [
+  'privacy_policy', 'terms_of_service', 'contact_phone', 'contact_email',
+  'sns_instagram', 'sns_youtube', 'sns_message',
+]
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).json({ success: false })
 
   const { key } = req.query
-  if (!key || typeof key !== 'string') {
-    return res.status(400).json({ success: false, message: 'key가 필요합니다.' })
+  if (!key || typeof key !== 'string' || !ALLOWED_KEYS.includes(key)) {
+    return res.status(400).json({ success: false, message: '허용되지 않은 key입니다.' })
   }
 
   try {
