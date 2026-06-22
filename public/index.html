@@ -40,45 +40,13 @@
 </head>
 <body>
 
-  <!-- ══ SVG filter defs (shared by all logo instances) ══ -->
-  <svg aria-hidden="true" focusable="false"
-       style="position:absolute;width:0;height:0;overflow:hidden">
-    <defs>
-      <!-- Dark mode: logo lines → white, background → transparent -->
-      <filter id="logo-to-white" x="0" y="0" width="100%" height="100%"
-              color-interpolation-filters="sRGB">
-        <feColorMatrix type="luminanceToAlpha" result="luma"/>
-        <feComponentTransfer in="luma" result="mask">
-          <feFuncA type="linear" slope="8" intercept="-2"/>
-        </feComponentTransfer>
-        <feFlood flood-color="#ffffff" flood-opacity="1" result="clr"/>
-        <feComposite in="clr" in2="mask" operator="in"/>
-      </filter>
-      <!-- Light mode: logo lines → near-black, background → transparent -->
-      <filter id="logo-to-black" x="0" y="0" width="100%" height="100%"
-              color-interpolation-filters="sRGB">
-        <feColorMatrix type="luminanceToAlpha" result="luma"/>
-        <feComponentTransfer in="luma" result="mask">
-          <feFuncA type="linear" slope="8" intercept="-2"/>
-        </feComponentTransfer>
-        <feFlood flood-color="#1a1a1a" flood-opacity="1" result="clr"/>
-        <feComposite in="clr" in2="mask" operator="in"/>
-      </filter>
-    </defs>
-  </svg>
-
   <!-- ══════════════════════ NAVBAR ══════════════════════ -->
   <nav class="navbar" id="navbar">
     <div class="nav-container">
 
       <a href="#" class="nav-logo" aria-label="THE OKTOP 홈으로">
-        <svg class="logo-svg" viewBox="0 0 175 116"
-             xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          <image class="logo-img-inner"
-                 href="/logo_black.png"
-                 x="0" y="0" width="175" height="116"
-                 preserveAspectRatio="xMidYMid meet"/>
-        </svg>
+        <img class="logo-img logo-img-dark"  src="/logo-dark.png"  alt="THE OKTOP" />
+        <img class="logo-img logo-img-light" src="/logo-light.png" alt="THE OKTOP" />
       </a>
 
       <ul class="nav-links" id="navLinks">
@@ -122,13 +90,8 @@
   <aside class="mobile-drawer" id="mobileDrawer" aria-label="모바일 메뉴">
     <button class="drawer-close" id="drawerClose" aria-label="메뉴 닫기">✕</button>
     <a href="#" class="drawer-logo" aria-label="THE OKTOP 홈으로">
-      <svg class="logo-svg logo-svg-drawer" viewBox="0 0 175 116"
-           xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <image class="logo-img-inner"
-               href="logo_black.png"
-               x="0" y="0" width="175" height="116"
-               preserveAspectRatio="xMidYMid meet"/>
-      </svg>
+      <img class="logo-img logo-img-drawer logo-img-dark"  src="/logo-dark.png"  alt="THE OKTOP" />
+      <img class="logo-img logo-img-drawer logo-img-light" src="/logo-light.png" alt="THE OKTOP" />
     </a>
     <ul class="drawer-links">
       <li><a href="#service">서비스</a></li>
@@ -145,9 +108,8 @@
     </div>
     <div class="drawer-auth-logged" id="drawerAuthLogged" style="display:none">
       <p class="drawer-username" id="drawerUserName"></p>
-      <a href="/mypage"       class="btn-cta drawer-auth-btn">마이페이지</a>
       <a href="#consultation" class="btn-cta drawer-auth-btn">상담신청</a>
-      <button class="drawer-auth-link drawer-logout-btn" id="drawerLogoutBtn">로그아웃</button>
+      <button class="btn-cta drawer-auth-btn" id="drawerLogoutBtn">로그아웃</button>
     </div>
   </aside>
 

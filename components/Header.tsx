@@ -145,14 +145,8 @@ export default function Header() {
           justifyContent: 'space-between',
         }}>
           {/* 로고 */}
-          <Link href="/" style={{
-            fontSize: 18,
-            fontWeight: 800,
-            letterSpacing: '3px',
-            color: GOLD,
-            textDecoration: 'none',
-          }}>
-            THE OKTOP
+          <Link href="/" style={{ display: 'flex', alignItems: 'center' }}>
+            <img src="/logo-dark.png" alt="THE OKTOP" style={{ height: '28px', width: 'auto' }} />
           </Link>
 
           {/* PC 버튼 */}

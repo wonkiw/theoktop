@@ -164,28 +164,22 @@ input, select, textarea { outline: none; }
   line-height: 0;
 }
 
-.logo-svg {
+.logo-img {
   height: 52px;
   width: auto;
   display: block;
   transition: opacity var(--t);
 }
 
-.logo-svg-drawer {
+.logo-img-drawer {
   height: 42px;
 }
 
-/* Dark mode: SVG filter extracts lines → recolors white, bg → transparent */
-[data-theme="dark"] .logo-img-inner {
-  filter: url(#logo-to-white);
-}
+.logo-img-light { display: none; }
+[data-theme="light"] .logo-img-dark  { display: none; }
+[data-theme="light"] .logo-img-light { display: block; }
 
-/* Light mode: same extraction → recolors near-black, bg → transparent */
-[data-theme="light"] .logo-img-inner {
-  filter: url(#logo-to-black);
-}
-
-.nav-logo:hover .logo-svg { opacity: 0.68; }
+.nav-logo:hover .logo-img { opacity: 0.68; }
 
 /* Desktop nav links */
 .nav-links {

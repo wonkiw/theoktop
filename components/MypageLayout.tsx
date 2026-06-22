@@ -55,14 +55,7 @@ export default function MypageLayout({
           ← 메인으로
         </a>
 
-        <span style={{
-          fontSize: '16px',
-          fontWeight: 700,
-          letterSpacing: '2px',
-          color: '#111',
-        }}>
-          THE OKTOP
-        </span>
+        <img src="/logo-light.png" alt="THE OKTOP" style={{ height: '28px', width: 'auto' }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           {userName && (
