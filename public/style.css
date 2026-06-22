@@ -2691,7 +2691,7 @@ input, select, textarea { outline: none; }
 [data-layout="mobile"] .footer-nav     { gap: 16px; }
 
 /* Mobile: score result below the map rather than overlaid */
-[data-layout="mobile"] .naver-map-container { height: 280px; }
+[data-layout="mobile"] .naver-map-container { height: 560px; }
 [data-layout="mobile"] #mapResult {
   position: static !important;
   margin-top: 12px;
@@ -2784,7 +2784,7 @@ input, select, textarea { outline: none; }
 
   /* ── Map layout ──────────────────────────────────────────── */
   .map-layout           { grid-template-columns: 1fr; }
-  .naver-map-container  { height: 280px; }
+  .naver-map-container  { height: 560px; }
   #mapResult            { position: static !important; margin-top: 12px; }
 
   /* ── Auth pane ───────────────────────────────────────────── */

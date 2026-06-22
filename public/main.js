@@ -696,7 +696,7 @@
       const result = response.v2.addresses[0];
       if (!result) return;
       const latlng = new naver.maps.LatLng(result.y, result.x);
-      if (naverMap) naverMap.setCenter(latlng);
+      if (naverMap) naverMap.morph(latlng, 19);
       if (naverMarker) naverMarker.setPosition(latlng);
       else {
         naverMarker = new naver.maps.Marker({ position: latlng, map: naverMap });
