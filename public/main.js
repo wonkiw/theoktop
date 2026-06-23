@@ -111,6 +111,11 @@
     openLegalModal('terms_of_service', '이용약관');
   });
 
+  document.getElementById('signupTermsLink')?.addEventListener('click', function (e) {
+    e.preventDefault();
+    openLegalModal('terms_of_service', '이용약관');
+  });
+
   /* 푸터 'PC 화면' 버튼 */
   document.getElementById('pcViewBtn')?.addEventListener('click', function () {
     const next = html.getAttribute('data-layout') === 'pc' ? 'mobile' : 'pc';
@@ -1118,6 +1123,7 @@
     const phone = document.getElementById('signupPhone')?.value.trim();
     const pw    = document.getElementById('signupPw')?.value;
     const pwc   = document.getElementById('signupPwConfirm')?.value;
+    const agreeTerms = document.getElementById('signupAgreeTerms')?.checked;
 
     if (!name)  { markInvalid('signupName',  'errSignupName',  '이름을 입력해주세요.'); ok = false; }
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -1132,6 +1138,9 @@
     if (pw !== pwc) {
       markInvalid('signupPwConfirm', 'errSignupPwConfirm', '비밀번호가 일치하지 않습니다.'); ok = false;
     }
+    if (!agreeTerms) {
+      setFieldError('errSignupAgreeTerms', '이용약관 동의가 필요합니다.'); ok = false;
+    }
     if (!ok) return;
 
     const signupBtn = document.getElementById('signupBtn');
@@ -1141,7 +1150,7 @@
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, password: pw, name: name, phone: phone }),
+        body: JSON.stringify({ email: email, password: pw, name: name, phone: phone, agreedTerms: agreeTerms }),
       });
       const data = await res.json();
 
