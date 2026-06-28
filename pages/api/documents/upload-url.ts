@@ -1,9 +1,20 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { createApiSupabaseClient } from '../../../lib/supabaseServer'
+import { createApiSupabaseClient, supabaseAdmin } from '../../../lib/supabaseServer'
 import { getUploadPresignedUrl } from '../../../lib/s3'
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png']
 const MAX_BYTES = 10 * 1024 * 1024 // 10MB
+
+async function getUid(req: NextApiRequest, res: NextApiResponse): Promise<string | null> {
+  const token = req.headers.authorization?.replace('Bearer ', '')
+  if (token) {
+    const { data: { user } } = await supabaseAdmin.auth.getUser(token)
+    if (user) return user.id
+  }
+  const supabase = createApiSupabaseClient(req, res)
+  const { data: { session } } = await supabase.auth.getSession()
+  return session?.user.id ?? null
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -15,9 +26,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ success: false, message: '파일 업로드 설정이 올바르지 않습니다. 관리자에게 문의해주세요.' })
   }
 
-  const supabase = createApiSupabaseClient(req, res)
-  const { data: { session } } = await supabase.auth.getSession()
-  if (!session) {
+  const uid = await getUid(req, res)
+  if (!uid) {
     return res.status(401).json({ success: false, message: '로그인이 필요합니다.' })
   }
 
@@ -34,7 +44,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const ext = fileName.split('.').pop() ?? 'bin'
-  const key = `documents/${session.user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const key = `documents/${uid}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
   try {
     const { uploadUrl, fileUrl } = await getUploadPresignedUrl(key, fileType, fileSize)

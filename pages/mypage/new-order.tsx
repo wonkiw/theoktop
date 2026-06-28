@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Header from '../../components/Header'
 import AddressSearch, { AddressInfo } from '../../components/AddressSearch'
+import { getSupabaseClient } from '../../lib/supabase'
 
 const ORDER_TYPES = ['매매', '전세', '임대', '기타']
 const ALLOWED_EXTENSIONS = ['.pdf', '.jpg', '.jpeg', '.png']
@@ -80,10 +81,13 @@ export default function NewOrderPage() {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
-  const uploadToS3 = async (file: File): Promise<string> => {
+  const uploadToS3 = async (file: File, token: string): Promise<string> => {
     const urlRes = await fetch('/api/documents/upload-url', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
       body: JSON.stringify({ fileName: file.name, fileType: file.type, fileSize: file.size }),
     })
     if (!urlRes.ok) {
@@ -121,17 +125,30 @@ export default function NewOrderPage() {
     setSubmitting(true)
 
     try {
+      const supabase = getSupabaseClient()
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setSubmitError('로그인이 필요합니다. 다시 로그인해주세요.')
+        setSubmitting(false)
+        return
+      }
+      const token = session.access_token
+      const authHeaders = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      }
+
       let uploadedFileUrl: string | null = null
       if (fileState?.file) {
         setFileState(prev => prev ? { ...prev, uploading: true } : prev)
-        uploadedFileUrl = await uploadToS3(fileState.file)
+        uploadedFileUrl = await uploadToS3(fileState.file, token)
         setFileState(prev => prev ? { ...prev, uploading: false, uploadedUrl: uploadedFileUrl } : prev)
       }
 
       const isSearch = addressMode === 'search'
       const orderRes = await fetch('/api/orders/create', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders,
         body: JSON.stringify({
           building_address: buildingAddress,
           building_detail:  isSearch ? (addressInfo?.detail?.trim() || null) : null,
@@ -145,13 +162,16 @@ export default function NewOrderPage() {
           description: description.trim() || null,
         }),
       })
+      if (!orderRes.ok) {
+        const orderData = await orderRes.json().catch(async () => ({ message: await orderRes.text().catch(() => '') }))
+        throw new Error(orderData.message || '의뢰 등록에 실패했습니다.')
+      }
       const orderData = await orderRes.json()
-      if (!orderRes.ok) throw new Error(orderData.message)
 
       if (fileState?.file && uploadedFileUrl) {
         const saveRes = await fetch('/api/documents/save', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: authHeaders,
           body: JSON.stringify({
             orderId: orderData.orderId,
             fileName: fileState.file.name,
@@ -159,8 +179,10 @@ export default function NewOrderPage() {
             fileType: fileState.file.type,
           }),
         })
-        const saveData = await saveRes.json()
-        if (!saveRes.ok) throw new Error(saveData.message)
+        if (!saveRes.ok) {
+          const saveData = await saveRes.json().catch(async () => ({ message: await saveRes.text().catch(() => '') }))
+          throw new Error(saveData.message || '파일 저장에 실패했습니다.')
+        }
       }
 
       router.push('/mypage/orders')
