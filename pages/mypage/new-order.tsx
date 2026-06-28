@@ -86,8 +86,18 @@ export default function NewOrderPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ fileName: file.name, fileType: file.type, fileSize: file.size }),
     })
+    if (!urlRes.ok) {
+      let message = '업로드 URL 발급에 실패했습니다.'
+      try {
+        const errData = await urlRes.json()
+        if (errData.message) message = errData.message
+      } catch {
+        const text = await urlRes.text().catch(() => '')
+        console.error('[upload-url] 서버 응답 (비 JSON):', text)
+      }
+      throw new Error(message)
+    }
     const urlData = await urlRes.json()
-    if (!urlRes.ok) throw new Error(urlData.message)
 
     const s3Res = await fetch(urlData.uploadUrl, {
       method: 'PUT',

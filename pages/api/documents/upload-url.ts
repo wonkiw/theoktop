@@ -10,6 +10,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ success: false, message: '허용되지 않는 메서드입니다.' })
   }
 
+  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
+    console.error('[documents/upload-url] AWS 환경변수 누락: AWS_ACCESS_KEY_ID 또는 AWS_SECRET_ACCESS_KEY가 설정되지 않았습니다.')
+    return res.status(500).json({ success: false, message: '파일 업로드 설정이 올바르지 않습니다. 관리자에게 문의해주세요.' })
+  }
+
   const supabase = createApiSupabaseClient(req, res)
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
@@ -31,7 +36,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const ext = fileName.split('.').pop() ?? 'bin'
   const key = `documents/${session.user.id}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 
-  const { uploadUrl, fileUrl } = await getUploadPresignedUrl(key, fileType, fileSize)
-
-  return res.status(200).json({ success: true, uploadUrl, fileUrl, key })
+  try {
+    const { uploadUrl, fileUrl } = await getUploadPresignedUrl(key, fileType, fileSize)
+    return res.status(200).json({ success: true, uploadUrl, fileUrl, key })
+  } catch (err) {
+    console.error('[documents/upload-url] presigned URL 발급 실패:', err)
+    return res.status(500).json({ success: false, message: 'S3 업로드 URL 발급에 실패했습니다. 잠시 후 다시 시도해주세요.' })
+  }
 }
