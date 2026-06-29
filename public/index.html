@@ -32,6 +32,14 @@
   <meta name="twitter:card"       content="summary_large_image">
 
   <link rel="icon" type="image/png" href="/logo_black.png">
+
+  <!-- PWA / TWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="theme-color" content="#13120F">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="THE OKTOP">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <!-- Google Fonts: Playfair Display (display) | Noto Sans KR (body) | Montserrat (mono/label) -->
@@ -959,5 +967,12 @@
     window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp1anRmYXdqa2FxdWlnb21jbGZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA0ODExNjcsImV4cCI6MjA5NjA1NzE2N30.46CAVTi3of8pCMJNlUyqBKzS7FTmMcrp0-3ar1dwFOw';
   </script>
   <script src="/main.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/sw.js');
+      });
+    }
+  </script>
 </body>
 </html>
