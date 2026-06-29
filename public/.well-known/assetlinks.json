@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.theoktop.app",
+      "sha256_cert_fingerprints": [
+        "AF:F5:68:C8:54:46:01:EF:17:7D:A5:C0:D0:93:DB:DC:96:A4:BE:AB:33:0E:5D:F3:DD:D9:5F:5D:99:2C:59:6D"
+      ]
+    }
+  }
+]
