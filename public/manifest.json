@@ -1,0 +1,25 @@
+{
+  "name": "THE OKTOP",
+  "short_name": "OKTOP",
+  "description": "더옥탑 - 옥상 리모델링 전문 서비스 공식 앱",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#13120F",
+  "theme_color": "#13120F",
+  "lang": "ko",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
